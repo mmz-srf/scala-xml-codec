@@ -9,7 +9,7 @@ import scalaz.{Equal, NonEmptyList, Show}
 
 final case class Path(elems: NonEmptyList[(String, Option[Int])]) {
 
-  def prepend(name: String, position: Option[Int]) =
+  def prepend(name: String, position: Option[Int]): Path =
     Path((s"$name", position) <:: elems)
 
   def updatePos(pos: Int): Path = {

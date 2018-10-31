@@ -22,3 +22,5 @@ scalacOptions ++= Seq(
 )
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8")
+
+wartremoverErrors ++= Warts.allBut(Wart.Any, Wart.Nothing)
