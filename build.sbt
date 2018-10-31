@@ -5,9 +5,9 @@ organization := "org.srg"
 name := "scala-xml-codec"
 
 val testDependencies = Seq(
-  //"org.typelevel" %% "scalaz-specs2" % "0.5.2",
-  "org.specs2" %% "specs2-scalacheck" % "4.3.5",
-  "org.scalaz" %% "scalaz-scalacheck-binding" % "7.2.26-scalacheck-1.14"
+  "org.typelevel" %% "scalaz-specs2" % "0.5.2",
+  "org.specs2" %% "specs2-scalacheck" % "4.0.2",
+  "org.scalaz" %% "scalaz-scalacheck-binding" % "7.2.26-scalacheck-1.13"
 ).map(_ % "test")
 
 libraryDependencies ++= Seq(
