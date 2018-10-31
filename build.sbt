@@ -1,6 +1,8 @@
 scalaVersion := "2.12.7"
 
-organization := "org.srg"
+crossScalaVersions := Seq("2.11.12", scalaVersion.value)
+
+organization := "ch.srg"
 
 name := "scala-xml-codec"
 
@@ -23,4 +25,33 @@ scalacOptions ++= Seq(
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8")
 
-wartremoverErrors ++= Warts.allBut(Wart.Any, Wart.Nothing)
+wartremoverErrors ++= Warts.allBut(Wart.Any, Wart.Nothing, Wart.NonUnitStatements)
+
+wartremoverErrors in test -= Wart.NonUnitStatements
+
+/* --------------------------------------------------------------------------------
+ * Release
+ * -------------------------------------------------------------------------------- */
+
+releaseCrossBuild := true
+
+/* --------------------------------------------------------------------------------
+ * Publishing
+ * -------------------------------------------------------------------------------- */
+
+homepage := Some(url("https://github.com/mmz-srf/scala-xml-codec"))
+
+scmInfo := Some(ScmInfo(
+  url("https://github.com/mmz-srf/scala-xml-codec"),
+  "git@github.com:username/projectname.git"))
+
+licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+
+publishMavenStyle := true
+
+publishTo := Some(
+  if (isSnapshot.value)
+    Opts.resolver.sonatypeSnapshots
+  else
+    Opts.resolver.sonatypeStaging
+)
