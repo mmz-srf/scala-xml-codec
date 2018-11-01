@@ -35,6 +35,24 @@ wartremoverErrors in test -= Wart.NonUnitStatements
 
 releaseCrossBuild := true
 
+releaseProcess := {
+  import ReleaseTransformations._
+  Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    releaseStepCommand("sonatypeRelease"),
+    publishArtifacts,
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  )
+}
+
 /* --------------------------------------------------------------------------------
  * Publishing
  * -------------------------------------------------------------------------------- */
@@ -55,3 +73,4 @@ publishTo := Some(
   else
     Opts.resolver.sonatypeStaging
 )
+
