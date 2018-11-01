@@ -39,7 +39,7 @@ releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 releaseProcess := {
   import ReleaseTransformations._
-  releaseProcess.value.dropRight(1) ++ Seq(
+  releaseProcess.value.dropRight(1) ++ Seq[ReleaseStep](
     releaseStepCommand("sonatypeRelease"),
     pushChanges
   )
