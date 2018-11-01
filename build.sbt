@@ -35,24 +35,10 @@ wartremoverErrors in test -= Wart.NonUnitStatements
 
 releaseCrossBuild := true
 
-releaseProcess := {
-  import ReleaseTransformations._
-  Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runClean,
-    runTest,
-    setReleaseVersion,
-    commitReleaseVersion,
-    tagRelease,
-    releaseStepCommand("publishSigned"),
-    releaseStepCommand("sonatypeRelease"),
-    publishArtifacts,
-    setNextVersion,
-    commitNextVersion,
-    pushChanges
-  )
-}
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+releaseProcess += releaseStepCommand("sonatypeRelease")
+
 
 /* --------------------------------------------------------------------------------
  * Publishing
