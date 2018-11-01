@@ -70,3 +70,4 @@ publishTo := Some(
     Opts.resolver.sonatypeStaging
 )
 
+publishConfiguration := publishConfiguration.value.withOverwrite(true)
