@@ -1,4 +1,4 @@
-# srf-xml-lib
+# Scala XML Codec
 
 XML validation and binding library.
 
@@ -22,15 +22,15 @@ XML validation and binding library.
 ## Examples
 
 * Test case to demonstrate usage:
-  * [Domain classes](src/test/scala/ch/srg/xml/example/Domain.scala)
-  * [XML codec](src/test/scala/ch/srg/xml/example/XmlCodec.scala)
-  * [Test class](src/test/scala/ch/srg/xml/DslTest.scala)
+  * [Domain classes](src/test/scala/ch/srf/xml/example/Domain.scala)
+  * [XML codec](src/test/scala/ch/srf/xml/example/XmlCodec.scala)
+  * [Test class](src/test/scala/ch/srf/xml/DslTest.scala)
 
 ## Usage
 
 ### Schema builder API
 
-[Schema builder API](src/main/scala/ch/srg/xml/Dsl.scala)
+[Schema builder API](src/main/scala/ch/srf/xml/Dsl.scala)
 
 #### Cardinalities
 
