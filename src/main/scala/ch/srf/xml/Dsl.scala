@@ -13,7 +13,7 @@ class Dsl[F[_]:Monad] {
 
 object Dsl {
 
-  lazy val simple = new Dsl[Id]
+  lazy val simple: Dsl[Id] = new Dsl[Id]
 
   def apply[F[_]:Monad]: Dsl[F] = new Dsl[F]
 
