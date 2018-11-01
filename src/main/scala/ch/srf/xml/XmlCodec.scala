@@ -49,14 +49,20 @@ object XmlCodec {
   def nonEmptyText[F[_]:Monad]: XmlCodec[F, Unit, String @@ NonEmptyTextValue, String] =
     new XmlCodec(XmlDecoder.nonEmptyText, XmlEncoder.nonEmptyText)
 
-  def attr[F[_]:Monad](name: String): XmlCodec[F, String, String @@ AttrValue, String] =
+  def attr[F[_]:Monad](name: String): AttrCodec[F, String] =
     new XmlCodec(XmlDecoder.attr(name), XmlEncoder.attr(name))
 
   def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
                                 (implicit
                                  hListDecoder: HListDecoder[F, CS, C],
                                  hListEncoder: HListEncoder[F, CS, C],
-                                 compact: CompactHList[C, A]): XmlCodec[F, String, Elem, A] =
+                                 compact: CompactHList[C, A]): ElemCodec[F, A] =
     new XmlCodec(XmlDecoder.elem(name, children), XmlEncoder.elem(name, children))
+
+  def elemGen[F[_]:Monad, CS, A](name: String, children: CS)
+                                (implicit
+                                 hListDecoder: HListDecoder[F, CS, A],
+                                 hListEncoder: HListEncoder[F, CS, A]): ElemCodec[F, A] =
+    new XmlCodec(XmlDecoder.elemGen(name, children), XmlEncoder.elemGen(name, children))
 
 }

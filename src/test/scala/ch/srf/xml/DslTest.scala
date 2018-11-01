@@ -209,12 +209,10 @@ object DslTest extends Specification {
     }
 
     "correctly encode values" in {
-      val prettyPrinter = new PrettyPrinter(80, 2)
-      def pretty(node: Node) = prettyPrinter.format(node)
 
       val result = decodeEmployees(validXml).map(encodeEmployees)
 
-      result.map(pretty) must be_\/-(pretty(validXml))
+      result.map(PrettyPrint.apply) must be_\/-(PrettyPrint(validXml))
     }
 
     "support skipping elements" in {
