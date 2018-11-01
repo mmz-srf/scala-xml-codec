@@ -71,3 +71,13 @@ publishTo := Some(
 )
 
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
+
+/* --------------------------------------------------------------------------------
+ * GitHub pages
+ * -------------------------------------------------------------------------------- */
+
+enablePlugins(GhpagesPlugin, SiteScaladocPlugin)
+
+git.remoteRepo := "git@github.com:{your username}/{your project}.git"
+
+ghpagesNoJekyll := true
