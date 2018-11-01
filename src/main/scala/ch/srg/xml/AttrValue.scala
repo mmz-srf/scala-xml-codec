@@ -1,3 +1,3 @@
 package ch.srg.xml
 
-sealed trait AttrValue
+private[xml] sealed trait AttrValue

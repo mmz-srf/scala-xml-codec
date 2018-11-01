@@ -1,10 +1,10 @@
 package ch.srg.xml
 
-trait ToXmlEncoder[C[_[_], _, _, _]] {
+private[xml] trait ToXmlEncoder[C[_[_], _, _, _]] {
   def apply[F[_], D, X, A](c: C[F, D, X, A]): XmlEncoder[F, D, X, A]
 }
 
-object ToXmlEncoder {
+private[xml] object ToXmlEncoder {
 
   implicit def codecInstance: ToXmlEncoder[XmlCodec] =
     new ToXmlEncoder[XmlCodec] {

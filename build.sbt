@@ -2,7 +2,7 @@ scalaVersion := "2.12.7"
 
 crossScalaVersions := Seq("2.11.12", scalaVersion.value)
 
-organization := "ch.srg"
+organization := "ch.srf"
 
 name := "scala-xml-codec"
 

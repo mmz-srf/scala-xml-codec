@@ -6,13 +6,13 @@ import shapeless.{::, HList, HNil}
 
 import scala.xml.Elem
 
-trait HListEncoder[F[_], C, A] {
+private[xml] trait HListEncoder[F[_], C, A] {
 
   def apply(enc: C): Encoder[F, Elem, (Elem, A)]
 
 }
 
-object HListEncoder {
+private[xml] object HListEncoder {
 
   implicit def hNilEncoder[F[_]:Monad]: HListEncoder[F, HNil, HNil] =
     new HListEncoder[F, HNil, HNil] {

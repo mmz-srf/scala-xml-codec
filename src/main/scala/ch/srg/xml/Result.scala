@@ -3,7 +3,7 @@ package ch.srg.xml
 import scalaz.syntax.all._
 import scalaz.{Applicative, EitherT, Equal, Monad, NonEmptyList, \/, ~>}
 
-final case class Result[F[_]:Applicative, A](value: F[Error \/ A]) {
+private[xml] final case class Result[F[_]:Applicative, A](value: F[Result.Error \/ A]) {
   import Result._
 
   def prependPath(name: String, pos: Option[Int]): Result[F, A] =
@@ -20,7 +20,9 @@ final case class Result[F[_]:Applicative, A](value: F[Error \/ A]) {
 
 }
 
-object Result {
+private[xml] object Result {
+
+  private[xml] type Error = NonEmptyList[(Path, String)]
 
   def success[F[_]:Applicative, A](value: A): Result[F, A] =
     value.point[Result[F, ?]]

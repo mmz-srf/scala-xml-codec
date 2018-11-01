@@ -7,13 +7,13 @@ import scalaz.{@@, NonEmptyList, Tag, \/}
 
 import scala.xml.Elem
 
-sealed trait GetFromElem[D, X] {
+private[xml] sealed trait GetFromElem[D, X] {
 
   def apply(e: Elem, id: D): String \/ X
 
 }
 
-object GetFromElem {
+private[xml] object GetFromElem {
 
   private def apply[D, X](f: (Elem, D) => String \/ X): GetFromElem[D, X] =
     new GetFromElem[D, X] {

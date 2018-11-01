@@ -7,7 +7,7 @@ import scalaz.std.tuple._
 import scalaz.syntax.foldable1._
 import scalaz.{Equal, NonEmptyList, Show}
 
-final case class Path(elems: NonEmptyList[(String, Option[Int])]) {
+private[xml] final case class Path(elems: NonEmptyList[(String, Option[Int])]) {
 
   def prepend(name: String, position: Option[Int]): Path =
     Path((s"$name", position) <:: elems)
@@ -19,7 +19,7 @@ final case class Path(elems: NonEmptyList[(String, Option[Int])]) {
 
 }
 
-object Path {
+private[xml] object Path {
 
   implicit def showInstance: Show[Path] =
     new Show[Path] {

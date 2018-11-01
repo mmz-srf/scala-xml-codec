@@ -2,7 +2,7 @@ package ch.srg.xml
 
 import java.time.LocalDate
 
-import ch.srg.xml.example.XmlCodec._
+import ch.srg.example.XmlCodec._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.DisjunctionMatchers._
 import scalaz.syntax.tag._

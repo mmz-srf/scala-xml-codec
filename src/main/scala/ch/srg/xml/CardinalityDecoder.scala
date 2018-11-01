@@ -5,13 +5,13 @@ import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._
 import scalaz.{Monad, NonEmptyList}
 
-trait CardinalityDecoder[F[_], Cy[_], X, A] {
+private[xml] trait CardinalityDecoder[F[_], Cy[_], X, A] {
 
   def decode(name: String, dec: X => Result[F, A], x: Cy[X]): Result[F, Cy[A]]
 
 }
 
-object CardinalityDecoder {
+private[xml] object CardinalityDecoder {
 
   def option[F[_]:Monad, I, X, A]: CardinalityDecoder[F, Option, X, A] =
     new CardinalityDecoder[F, Option, X, A] {

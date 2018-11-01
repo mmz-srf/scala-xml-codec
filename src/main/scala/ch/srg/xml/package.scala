@@ -6,8 +6,6 @@ import scala.xml.Elem
 
 package object xml {
 
-  type Error = NonEmptyList[(Path, String)]
-
   type Ensure[F[_], A] = A => F[Option[String]]
 
   type ElemDecoder[F[_], A] = XmlDecoder[F, String, Elem, A]

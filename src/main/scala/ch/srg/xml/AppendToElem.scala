@@ -8,13 +8,13 @@ import scalaz.{@@, Foldable, NonEmptyList}
 
 import scala.xml.{Attribute, Elem, Null, Text}
 
-sealed trait AppendToElem[D, X] {
+private[xml] sealed trait AppendToElem[D, X] {
 
   def apply(elem: Elem, x: X, name: D): Elem
 
 }
 
-object AppendToElem {
+private[xml] object AppendToElem {
 
   private def apply[D, X](f: (Elem, X, D) => Elem): AppendToElem[D, X] =
     new AppendToElem[D, X] {

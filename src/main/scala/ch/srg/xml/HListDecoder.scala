@@ -7,13 +7,13 @@ import shapeless.{::, HList, HNil}
 
 import scala.xml.Elem
 
-trait HListDecoder[F[_], C, A] {
+private[xml] trait HListDecoder[F[_], C, A] {
 
   def apply(dec: C, e: Elem): Result[F, A]
 
 }
 
-object HListDecoder {
+private[xml] object HListDecoder {
 
   implicit def hNilDecoder[F[_]:Monad]: HListDecoder[F, HNil, HNil] =
     new HListDecoder[F, HNil, HNil] {

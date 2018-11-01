@@ -1,3 +1,3 @@
 package ch.srg.xml
 
-sealed trait TextValue
+private[xml] sealed trait TextValue

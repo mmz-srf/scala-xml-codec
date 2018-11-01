@@ -1,3 +1,3 @@
 package ch.srg.xml
 
-sealed trait NonEmptyTextValue
+private[xml] sealed trait NonEmptyTextValue

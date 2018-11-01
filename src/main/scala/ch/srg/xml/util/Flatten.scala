@@ -5,12 +5,12 @@ import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.syntax.monad._
 
-trait Flatten[A, B] {
+private[xml] trait Flatten[A, B] {
   def to(a: A): B
   def from(b: B): A
 }
 
-object Flatten {
+private[xml] object Flatten {
 
   def instance[F[_]:Monad, A]: Flatten[F[F[A]], F[A]] =
     new Flatten[F[F[A]], F[A]] {

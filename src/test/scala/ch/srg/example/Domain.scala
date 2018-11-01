@@ -1,4 +1,4 @@
-package ch.srg.xml.example
+package ch.srg.example
 
 import scalaz.Reader
 

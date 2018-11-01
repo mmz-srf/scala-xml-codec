@@ -1,6 +1,6 @@
-package ch.srg.xml.example
+package ch.srg.example
 
-import ch.srg.xml.example.Domain._
+import ch.srg.example.Domain._
 import ch.srg.xml.{Codec, Decoder, Dsl, Encoder}
 import scalaz.syntax.std.option._
 import scalaz.{NonEmptyList, Reader, \/}
