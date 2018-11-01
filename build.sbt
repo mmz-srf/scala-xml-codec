@@ -45,6 +45,7 @@ releaseProcess := {
     setReleaseVersion,
     commitReleaseVersion,
     tagRelease,
+    releaseStepCommand("publishSigned"),
     releaseStepCommand("sonatypeRelease"),
     publishArtifacts,
     setNextVersion,
