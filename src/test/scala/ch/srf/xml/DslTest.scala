@@ -141,13 +141,13 @@ object DslTest extends Specification {
 
     "support appending encoders" in {
       import Dsl.simple.encode._
-      val s = elem1("x", text ~ Encoder.fromFunction("x" * _))
+      val s = elem1("x", text ~ Encoder.fromFunction("x" * (_: Int)))
       s.encode(3) must_=== <x>xxx</x>
     }
 
     "support appending codecs" in {
       import Dsl.simple.codec._
-      val s = elem1("x", text ~ Codec.fromFunctions(_.length, "x" * _))
+      val s = elem1("x", text ~ Codec.fromFunctions(_.length, "x" * (_: Int)))
       s.decode(<x>xxx</x>) must be_\/-(3)
       s.encode(3) must_=== <x>xxx</x>
     }
