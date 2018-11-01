@@ -22,8 +22,8 @@ XML validation and binding library.
 ## Examples
 
 * Test case to demonstrate usage:
-  * [Domain classes](src/test/scala/ch/srf/xml/example/Domain.scala)
-  * [XML codec](src/test/scala/ch/srf/xml/example/XmlCodec.scala)
+  * [Domain classes](src/test/scala/ch/srf/example/Domain.scala)
+  * [XML codec](src/test/scala/ch/srf/example/XmlCodec.scala)
   * [Test class](src/test/scala/ch/srf/xml/DslTest.scala)
 
 ## Usage
