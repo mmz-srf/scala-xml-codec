@@ -37,8 +37,13 @@ releaseCrossBuild := true
 
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
-releaseProcess += releaseStepCommand("sonatypeRelease")
-
+releaseProcess := {
+  import ReleaseTransformations._
+  releaseProcess.value.dropRight(1) ++ Seq(
+    releaseStepCommand("sonatypeRelease"),
+    pushChanges
+  )
+}
 
 /* --------------------------------------------------------------------------------
  * Publishing
@@ -49,6 +54,10 @@ homepage := Some(url("https://github.com/mmz-srf/scala-xml-codec"))
 scmInfo := Some(ScmInfo(
   url("https://github.com/mmz-srf/scala-xml-codec"),
   "git@github.com:username/projectname.git"))
+
+developers := List(
+  Developer(id = "devkat", name="Andreas Jim-Hartmann", email="andreas.hartmann@srf.ch", url = url("https://github.com/devkat"))
+)
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
