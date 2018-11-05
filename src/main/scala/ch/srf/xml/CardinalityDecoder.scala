@@ -5,7 +5,7 @@ import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._
 import scalaz.{Monad, NonEmptyList}
 
-private[xml] trait CardinalityDecoder[F[_], Cy[_], X, A] {
+private[xml] sealed trait CardinalityDecoder[F[_], Cy[_], X, A] {
 
   def decode(name: String, dec: X => Result[F, A], x: Cy[X]): Result[F, Cy[A]]
 
