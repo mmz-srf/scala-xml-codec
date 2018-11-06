@@ -17,7 +17,7 @@ private[xml] object CardinalityDecoder {
   def option[F[_]:Applicative, I, X, A]: CardinalityDecoder[F, Option, X, A] =
     new CardinalityDecoder[F, Option, X, A] {
       override def decode(name: String, dec: X => Result[F, A], x: Option[X]): Result[F, Option[A]] =
-        decodeTraverse(name, dec, x)
+        x traverse dec
     }
 
   def list[F[_]:Applicative, I, X, A]: CardinalityDecoder[F, List, X, A] =

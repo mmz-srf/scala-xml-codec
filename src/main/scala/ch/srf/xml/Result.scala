@@ -43,14 +43,19 @@ private[xml] object Result {
       private lazy val C = Applicative[F]
         .compose[Result.Errors \/ ?]
 
-      override def ap[A, B](fa: => Result[F, A])(f: => Result[F, A => B]): Result[F, B] =
+      override def ap[A, B](fa: => Result[F, A])(f: => Result[F, A => B]): Result[F, B] = {
+        lazy val C2 = Applicative[F]
+          .compose[scalaz.Validation[Result.Errors, ?]]
+
         Result(
-          C
+          C2
             .apply2(
-              f.value,
-              fa.value
+              f.value.map(_.validation),
+              fa.value.map(_.validation)
             )(_(_))
+            .map(_.disjunction)
         )
+      }
 
       override def point[A](a: => A): Result[F, A] =
         Result(C point a)
