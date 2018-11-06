@@ -16,13 +16,13 @@ object Gens {
     )
 
   def resultGen[F[_]:Monad, A](implicit ev: Arbitrary[A]): Gen[Result[F, A]] =
-    arbitrary[Result.Error \/ A].map(r => Result(r.point[F]))
+    arbitrary[Result.Errors \/ A].map(r => Result(r.point[F]))
 
   implicit def resultArb[F[_]:Monad, A](implicit ev: Arbitrary[A]): Arbitrary[Result[F, A]] =
     Arbitrary(resultGen)
 
   def monadicResultGen[F[_]:Monad, A](implicit ev: Arbitrary[A]): Gen[Monadic[F, A]] =
-    arbitrary[Result.Error \/ A].map(r => Monadic(r.point[F]))
+    arbitrary[Result.Errors \/ A].map(r => Monadic(r.point[F]))
 
   implicit def monadicResultArb[F[_]:Monad, A](implicit ev: Arbitrary[A]): Arbitrary[Monadic[F, A]] =
     Arbitrary(monadicResultGen)
