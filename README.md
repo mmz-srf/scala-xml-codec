@@ -7,7 +7,7 @@ XML validation and binding library.
 * Validate XML structure
 * Assertions on nodes and node collections
 * Decode XML
-  * As nested tuples (default)
+  * As nested HLists (default)
   * As arbitrary data types by using custom decoders
   * Using effects (decoders can target an arbitrary monad)
 * Encode XML
