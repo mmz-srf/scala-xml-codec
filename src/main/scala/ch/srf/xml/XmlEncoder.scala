@@ -78,31 +78,23 @@ object XmlEncoder {
 
     }
 
-  def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
-                                (implicit
-                                 hListEncoder: HListEncoder[F, CS, C],
-                                 compact: CompactHList[C, A]): ElemEncoder[F, A] =
+  def elemCompact[F[_]:Monad, CS, C, A](name: String, children: CS)
+                                       (implicit
+                                        hListEncoder: HListEncoder[F, CS, C],
+                                        compact: CompactHList[C, A]): ElemEncoder[F, A] =
+    elem(name, children) ~ Encoder.fromFunction(compact.from)
+
+  def elem[F[_]:Monad, CS, A](name: String, children: CS)
+                             (implicit
+                             hListEncoder: HListEncoder[F, CS, A]): ElemEncoder[F, A] =
     new XmlEncoder[F, String, Elem, A] {
 
-      private def compactEncoder: Encoder[F, C, A] =
-        Encoder.fromFunction[F, C, A](compact.from)
-
-      def encoder: Encoder[F, Elem, A] =
-        hListEncoder.apply(children).contramap[C]((<dummy/>.copy(label = name), _)) ~ compactEncoder
-
-      override def descriptor: Descriptor[String] =
-        Descriptor.elem(name)
-
-    }
-
-  def elemGen[F[_]:Monad, CS, A](name: String, children: CS)
-                                (implicit
-                                 hListEncoder: HListEncoder[F, CS, A]): ElemEncoder[F, A] =
-    new XmlEncoder[F, String, Elem, A] {
       def encoder: Encoder[F, Elem, A] =
         hListEncoder.apply(children).contramap[A]((<dummy/>.copy(label = name), _))
+
       override def descriptor: Descriptor[String] =
         Descriptor.elem(name)
+
     }
 
 }

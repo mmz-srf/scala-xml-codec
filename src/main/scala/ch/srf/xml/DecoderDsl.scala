@@ -29,7 +29,7 @@ class DecoderDsl[F[_]:Monad] extends EnsureOps {
                                      (implicit
                                       dec: HListDecoder[F, SC, C],
                                       compact: CompactHList[C, A]): ElemDecoder[F, A] =
-    XmlDecoder.elem(name, children)
+    XmlDecoder.elemCompact(name, children)
 
   def elem1[C1, C, A](name: String, c1: C1)
                      (implicit

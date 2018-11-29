@@ -90,41 +90,29 @@ object XmlDecoder {
 
     }
 
-  def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
-                                (implicit
-                                 hListDecoder: HListDecoder[F, CS, C],
-                                 compact: CompactHList[C, A]): ElemDecoder[F, A] =
-    new XmlDecoder[F, String, Elem, A] {
+  def elemCompact[F[_]:Monad, CS, C, A](name: String, children: CS)
+                                       (implicit
+                                        hListDecoder: HListDecoder[F, CS, C],
+                                        compact: CompactHList[C, A]): ElemDecoder[F, A] =
+    elem(name, children) ~ Decoder.fromFunction(compact.to)
 
-      private def checkName: Decoder[F, Elem, Elem] =
-        Decoder.ensure[F, Elem](EnsureOps.check(_.label === name, e => s"Found <${e.label}> instead of <$name>"))
-
-      override def descriptor: Descriptor[String] =
-        Descriptor.elem(name)
-
-      override def dec(e: Elem): Result[F, A] =
-        Result
-          .fromDisjunction(checkName.decode(e), descriptor.name)
-          .monadic
-          .flatMap(_ => hListDecoder(children, e).prependPath(descriptor.name, None).monadic)
-          .map(compact.to)
-          .applicative
-
-    }
-
-  def elemGen[F[_]:Monad, CS, A](name: String, children: CS)
+  def elem[F[_]:Monad, CS, A](name: String, children: CS)
                                    (implicit
                                     hListDecoder: HListDecoder[F, CS, A]): XmlDecoder[F, String, Elem, A] =
     new XmlDecoder[F, String, Elem, A] {
+
       private def checkName: Decoder[F, Elem, Elem] =
         Decoder.ensure[F, Elem](EnsureOps.check(_.label === name, e => s"Found <${e.label}> instead of <$name>"))
+
       override def descriptor: Descriptor[String] =
         Descriptor.elem(name)
+
       override def dec(e: Elem): Result[F, A] =
         Result
           .fromDisjunction(checkName.decode(e), descriptor.name)
           .monadic
           .flatMap(_ => hListDecoder(children, e).prependPath(descriptor.name, None).monadic)
           .applicative
+
     }
 }
