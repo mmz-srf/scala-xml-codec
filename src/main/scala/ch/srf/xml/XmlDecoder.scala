@@ -57,7 +57,7 @@ object XmlDecoder {
         d.descriptor
 
       override def dec(x: C[X]): Result[F, C[A]] =
-        cd.decode(d.descriptor.name, d.dec, x)
+        cd.decode(d.dec, x)
 
     }
 
