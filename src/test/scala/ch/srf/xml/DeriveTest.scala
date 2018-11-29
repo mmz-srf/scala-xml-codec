@@ -1,9 +1,12 @@
 package ch.srf.xml
 
+import java.time.LocalDate
+
+import ch.srf.xml.Codecs._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.DisjunctionMatchers._
 import scalaz.Id.Id
-import scalaz.NonEmptyList
+import scalaz.{@@, NonEmptyList}
 
 object DeriveTest extends Specification {
 
@@ -11,14 +14,16 @@ object DeriveTest extends Specification {
 
     "correctly decode and encode XML" in {
 
+      sealed trait Name
+
       final case class Foo(id: Option[Int],
-                           name: Option[String],
+                           name: Option[String @@ Name],
                            bar: Bar,
                            baz: Option[Baz],
                            quxs: List[Qux],
                            quuxs: NonEmptyList[Quux])
 
-      final case class Bar(name: String)
+      final case class Bar(date: LocalDate)
 
       final case class Baz(name: String)
 
@@ -30,7 +35,7 @@ object DeriveTest extends Specification {
 
       val xml =
         <foo id="1">
-          <bar name="bar"/>
+          <bar date="2018-11-28"/>
           <baz name="baz"/>
           <qux name="qux1"/>
           <qux name="qux2" value="2"/>
@@ -42,7 +47,7 @@ object DeriveTest extends Specification {
         Foo(
           id = Some(1),
           name = None,
-          bar = Bar("bar"),
+          bar = Bar(LocalDate.parse("2018-11-28")),
           baz = Some(Baz("baz")),
           quxs = List(Qux("qux1", None), Qux("qux2", Some(2))),
           quuxs = NonEmptyList(Quux("quux1"), Quux("quux2"))

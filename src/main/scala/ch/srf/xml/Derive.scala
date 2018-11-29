@@ -30,7 +30,8 @@ object Derive {
 
   trait DeriveCodecLow {
 
-    implicit def attrInstance[F[_]:Monad, A](implicit codec: Codec[F, String, A]): DeriveCodec[F, String, String @@ AttrValue, A] =
+    implicit def attrInstance[F[_]
+    : Monad, A](implicit codec: Codec[F, String, A]): DeriveCodec[F, String, String @@ AttrValue, A] =
       new DeriveCodec[F, String, String @@ AttrValue, A] {
         override def apply(name: String, notation: Notation): AttrCodec[F, A] =
           XmlCodec.attr[F](notation(name)) ~ codec
@@ -41,24 +42,25 @@ object Derive {
   object DeriveCodec extends DeriveCodecLow {
 
     private def collection[F[_]
-    : Monad, C[_]
-    : Traverse, D, X, A](cd: CardinalityDecoder[F, C, X, A])
-                        (implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, C[X], C[A]] =
+    : Monad, C[_]: Traverse, D, X, A](cd: CardinalityDecoder[F, C, X, A])
+                                     (implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, C[X], C[A]] =
       new DeriveCodec[F, D, C[X], C[A]] {
         override def apply(name: String, notation: Notation): XmlCodec[F, D, C[X], C[A]] =
           XmlCodec.collection(ev(name, notation: Notation), cd)
       }
 
-    implicit def option[F[_]:Monad, D, X, A](implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, Option[X], Option[A]] =
+    implicit def option[F[_]
+    : Monad, D, X, A](implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, Option[X], Option[A]] =
       collection[F, Option, D, X, A](CardinalityDecoder.option[F, X, A])
 
-    implicit def list[F[_]:Monad, D, X, A](implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, List[X], List[A]] =
+    implicit def list[F[_]: Monad, D, X, A](implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, List[X], List[A]] =
       collection[F, List, D, X, A](CardinalityDecoder.list[F, X, A])
 
-    implicit def nel[F[_]:Monad, D, X, A](implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, NonEmptyList[X], NonEmptyList[A]] =
+    implicit def nel[F[_]
+    : Monad, D, X, A](implicit ev: DeriveCodec[F, D, X, A]): DeriveCodec[F, D, NonEmptyList[X], NonEmptyList[A]] =
       collection[F, NonEmptyList, D, X, A](CardinalityDecoder.nel[F, X, A])
 
-    implicit def attrInstanceS[F[_]:Monad, A]: DeriveCodec[F, String, String @@ AttrValue, String] =
+    implicit def stringAttrInstance[F[_]: Monad, A]: DeriveCodec[F, String, String @@ AttrValue, String] =
       new DeriveCodec[F, String, String @@ AttrValue, String] {
         override def apply(name: String, notation: Notation): AttrCodec[F, String] =
           XmlCodec.attr(notation(name))
@@ -68,17 +70,18 @@ object Derive {
       implicit def keyToName[A]: ToName.Case[Symbol with A] { type Result = String } = at[Symbol with A](_.name)
     }
 
-    implicit def elemInstance[F[_]:Monad, A, G <: HList, LG <: HList, K <: HList, KS <: HList, CS <: HList, CR <: HList]
-    (implicit
-     classTag: ClassTag[A],
-     generic: Generic.Aux[A, G],
-     labelledGeneric: LabelledGeneric.Aux[A, LG],
-     keys: Keys.Aux[LG, K],
-     mapper: Mapper.Aux[ToName.type, K, KS],
-     mkDerive: MkDerive[F, G, KS, CS],
-     reverse: Reverse.Aux[CS, CR],
-     HListDecoder: HListDecoder[F, CS, G],
-     HListEncoder: HListEncoder[F, CS, G]): DeriveCodec[F, String, Elem, A] =
+    implicit def elemInstance[
+    F[_]: Monad, A, G <: HList, LG <: HList, K <: HList, KS <: HList, CS <: HList, CR <: HList
+    ](implicit
+      classTag: ClassTag[A],
+      generic: Generic.Aux[A, G],
+      labelledGeneric: LabelledGeneric.Aux[A, LG],
+      keys: Keys.Aux[LG, K],
+      mapper: Mapper.Aux[ToName.type, K, KS],
+      mkDerive: HListDerive[F, G, KS, CS],
+      reverse: Reverse.Aux[CS, CR],
+      HListDecoder: HListDecoder[F, CS, G],
+      HListEncoder: HListEncoder[F, CS, G]): DeriveCodec[F, String, Elem, A] =
       new DeriveCodec[F, String, Elem, A] {
         val _ = (generic, labelledGeneric)
         override def apply(name: String, notation: Notation): ElemCodec[F, A] = {
@@ -105,22 +108,23 @@ object Derive {
 
   }
 
-  trait MkDerive[F[_], G <: HList, K <: HList, O <: HList] {
+  trait HListDerive[F[_], G <: HList, K <: HList, O <: HList] {
     def apply(keys: K, notation: Notation): O
   }
 
-  object MkDerive {
+  object HListDerive {
 
-    implicit def hNilDerive[F[_]]: MkDerive[F, HNil, HNil, HNil] =
-      new MkDerive[F, HNil, HNil, HNil] {
+    implicit def hNilDerive[F[_]]: HListDerive[F, HNil, HNil, HNil] =
+      new HListDerive[F, HNil, HNil, HNil] {
         override def apply(keys: HNil, notation: Notation): HNil = HNil
       }
 
-    implicit def hConsDerive[F[_]:Monad, D, X, A, T <: HList, TK <: HList, TO <: HList
-    ](implicit
-      headDerive: DeriveCodec[F, D, X, A],
-      tailDerive: MkDerive[F, T, TK, TO]): MkDerive[F, A :: T, String :: TK, XmlCodec[F, D, X, A] :: TO] =
-      new MkDerive[F, A :: T, String :: TK, XmlCodec[F, D, X, A] :: TO] {
+    implicit def hConsDerive[F[_]
+    : Monad, D, X, A, T <: HList, TK <: HList, TO <: HList](implicit
+                                                            headDerive: DeriveCodec[F, D, X, A],
+                                                            tailDerive: HListDerive[F, T, TK, TO]):
+    HListDerive[F, A :: T, String :: TK, XmlCodec[F, D, X, A] :: TO] =
+      new HListDerive[F, A :: T, String :: TK, XmlCodec[F, D, X, A] :: TO] {
         override def apply(keys: String :: TK, notation: Notation): XmlCodec[F, D, X, A] :: TO = {
           val key :: tailKeys = keys
           headDerive.apply(key, notation) :: tailDerive(tailKeys, notation)
@@ -129,8 +133,7 @@ object Derive {
 
   }
 
-  implicit def instance[F[_]:Monad, A
-  ](implicit deriveCodec: DeriveCodec[F, String, Elem, A]): Derive[F, A] =
+  implicit def instance[F[_]:Monad, A](implicit deriveCodec: DeriveCodec[F, String, Elem, A]): Derive[F, A] =
     new Derive[F, A] {
       override def apply(notation: Notation): ElemCodec[F, A] =
         deriveCodec.apply("", notation)

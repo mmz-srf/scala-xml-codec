@@ -3,6 +3,7 @@ package ch.srf.xml
 import java.time.LocalDate
 
 import ch.srf.example.XmlCodec._
+import ch.srf.xml.Codecs._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.DisjunctionMatchers._
 import scalaz.syntax.tag._
@@ -110,15 +111,6 @@ object DslTest extends Specification {
 
     "support chaining codecs" in {
       import Dsl.simple.codec._
-
-      implicit def localDateCodec[F[_]:Monad]: Codec[F, String, LocalDate] =
-        Codec.from(
-          Decoder.fromTryCatchNonFatal(LocalDate.parse),
-          Encoder.fromFunction(_.toString)
-        )
-
-      implicit def tagCodec[F[_]:Monad, A, T]: Codec[F, A, A @@ T] =
-        Codec.fromFunctions(Tag.of[T](_), _.unwrap)
 
       sealed trait StartDate
 
