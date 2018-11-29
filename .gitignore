@@ -1,0 +1,5 @@
+shell.nix
+tags
+project/project
+project/target/
+target/
