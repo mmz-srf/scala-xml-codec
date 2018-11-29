@@ -14,7 +14,8 @@ final class Codec[F[_], X, A](val decoder: Decoder[F, X, A], val encoder: Encode
   def encode(a: A): F[X] =
     encoder.encode(a)
 
-  def ~[B](codec: Codec[F, A, B]): Codec[F, X, B] =
+  def ~[B](codec: Codec[F, A, B])
+          (implicit monadEv: Monad[F]): Codec[F, X, B] =
     Codec.from(decoder ~ codec.decoder, encoder ~ codec.encoder)
 
 }
@@ -48,5 +49,4 @@ object Codec extends CodecLow {
 
   def ensure[F[_]:Monad, A](e: Ensure[F, A]): Codec[F, A, A] =
     from(Decoder.ensure(e), Encoder.id[F, A])
-
 }
