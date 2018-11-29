@@ -26,17 +26,17 @@ object DeriveTest extends Specification {
 
       final case class Quux(name: String)
 
-      val codec = Derive[Id, Foo]
+      val codec = Derive[Id, Foo](_.toLowerCase)
 
       val xml =
-        <Foo id="1">
-          <Bar name="bar"/>
-          <Baz name="baz"/>
-          <Qux name="qux1"/>
-          <Qux name="qux2" value="2"/>
-          <Quux name="quux1"/>
-          <Quux name="quux2"/>
-        </Foo>
+        <foo id="1">
+          <bar name="bar"/>
+          <baz name="baz"/>
+          <qux name="qux1"/>
+          <qux name="qux2" value="2"/>
+          <quux name="quux1"/>
+          <quux name="quux2"/>
+        </foo>
 
       val foo =
         Foo(

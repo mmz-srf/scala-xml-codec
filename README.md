@@ -12,6 +12,7 @@ XML validation and binding library.
   * Using effects (decoders can target an arbitrary monad)
 * Encode XML
 * Modular schemas
+* Derive codecs from case classes
 
 ## Limitations
 
@@ -260,4 +261,29 @@ Decoding XML targeting the `EnvReader` effect monad:
     schema
       .decode(xml)
       .run(env) // Execute the effect
+
+### Deriving codesc from case classes
+
+Codecs can be automatically derived from case classes. This is particularly useful in simple cases where the XML structure directly reflects the case class hierarchy.
+
+The following rules apply:
+
+* Case classes are represented as elements.
+* Atomic types are represented as attributes.
+
+Attribute and element names are computed from the names of the corresponding field and class names using a notation function.
+
+
+    final case class Foo(name: String, bars: List[Bar])
+    final case class Bar(num: Int)
+    
+    val xml =
+      <foo name="foo">
+        <bar num="1"/>
+        <bar num="2"/>
+      </foo>
+
+    val codec = Derive[Id, Foo](notation = _.toLowerCase)
+    
+    codec.decode(xml)
 
