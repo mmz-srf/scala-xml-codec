@@ -68,7 +68,7 @@ object Derive {
       implicit def keyToName[A]: ToName.Case[Symbol with A] { type Result = String } = at[Symbol with A](_.name)
     }
 
-    implicit def elemInstance[F[_]:Monad, A, G <: HList, LG <: HList, K <: HList, KS <: HList, CS <: HList, CSR <: HList]
+    implicit def elemInstance[F[_]:Monad, A, G <: HList, LG <: HList, K <: HList, KS <: HList, CS <: HList, CR <: HList]
     (implicit
      classTag: ClassTag[A],
      generic: Generic.Aux[A, G],
@@ -76,13 +76,14 @@ object Derive {
      keys: Keys.Aux[LG, K],
      mapper: Mapper.Aux[ToName.type, K, KS],
      mkDerive: MkDerive[F, G, KS, CS],
+     reverse: Reverse.Aux[CS, CR],
      HListDecoder: HListDecoder[F, CS, G],
      HListEncoder: HListEncoder[F, CS, G]): DeriveCodec[F, String, Elem, A] =
       new DeriveCodec[F, String, Elem, A] {
         val _ = (generic, labelledGeneric)
         override def apply(name: String): ElemCodec[F, A] = {
           val children = mkDerive(keys().map(ToName))
-          XmlCodec.elemGen[F, CS, G](safeSimpleName(classTag.runtimeClass), children) ~
+          XmlCodec.elem[F, CS, G](safeSimpleName(classTag.runtimeClass), children) ~
             Codec.fromFunctions(generic.from, generic.to)
         }
       }
