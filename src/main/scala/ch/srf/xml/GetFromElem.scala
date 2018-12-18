@@ -1,11 +1,11 @@
 package ch.srf.xml
 
 import ch.srf.xml.scalazext.syntax._
+import scalaz.Id.Id
 import scalaz.syntax.either._
 import scalaz.syntax.functor._
 import scalaz.syntax.std.list._
 import scalaz.syntax.std.option._
-import scalaz.Id.Id
 import scalaz.{@@, Applicative, NonEmptyList, Tag, \/}
 
 import scala.xml.Elem

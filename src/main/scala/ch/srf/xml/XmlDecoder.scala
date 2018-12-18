@@ -1,13 +1,13 @@
 package ch.srf.xml
 
 import ch.srf.xml.util.{CompactHList, Flatten}
+import scalaz.Id.Id
 import scalaz.std.string.stringInstance
 import scalaz.syntax.all._
 import scalaz.syntax.tag._
-import scalaz.Id.Id
 import scalaz.{@@, Monad, NonEmptyList, \/}
 
-import scala.xml.{Elem, Node}
+import scala.xml.Elem
 
 final case class XmlDecoder[F[_]:Monad, D, C[_], X, A](descriptor: Descriptor[D],
                                                        dec: C[X] => Result[F, C[A]],

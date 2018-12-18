@@ -1,10 +1,10 @@
 package ch.srf.xml
 
+import scalaz.Id.Id
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.syntax.foldable._
 import scalaz.syntax.tag._
-import scalaz.Id.Id
 import scalaz.{@@, Foldable, NonEmptyList}
 
 import scala.xml.{Attribute, Elem, Null, Text}

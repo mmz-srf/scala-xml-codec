@@ -3,7 +3,7 @@ package ch.srf.xml
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._
-import scalaz.{Monad, NonEmptyList, Traverse, Applicative}
+import scalaz.{Applicative, NonEmptyList, Traverse}
 
 private[xml] sealed trait CardinalityDecoder[F[_], Cy[_], X, A] {
 
