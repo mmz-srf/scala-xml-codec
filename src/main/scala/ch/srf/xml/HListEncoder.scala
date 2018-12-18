@@ -22,21 +22,29 @@ private[xml] object HListEncoder {
 
     }
 
-  implicit def hConsEncoder[F[_], C[_[_], _, _, _], D, X, A, TS <: HList, TA <: HList](implicit
-                                                                                       monadEv: Monad[F],
-                                                                                       toEncoder: ToXmlEncoder[C],
-                                                                                       appendToElem: AppendToElem[D, X],
-                                                                                       tailEncoder: HListEncoder[F, TS, TA]): HListEncoder[F, C[F, D, X, A] :: TS, A :: TA] =
-    new HListEncoder[F, C[F, D, X, A] :: TS, A :: TA] {
+  implicit def hConsEncoder[
+  F[_],
+  CC[_[_], _, _[_], _, _],
+  C[_],
+  D,
+  X,
+  A,
+  TS <: HList,
+  TA <: HList](implicit
+               monadEv: Monad[F],
+               toEncoder: ToXmlEncoder[CC],
+               appendToElem: AppendToElem[D, C, X],
+               tailEncoder: HListEncoder[F, TS, TA]): HListEncoder[F, CC[F, D, C, X, A] :: TS, C[A] :: TA] =
+    new HListEncoder[F, CC[F, D, C, X, A] :: TS, C[A] :: TA] {
 
-      override def apply(enc: C[F, D, X, A] :: TS): Encoder[F, Elem, (Elem, A :: TA)] =
-        Encoder[F, Elem, (Elem, A :: TA)] { case (parent, value) =>
+      override def apply(enc: CC[F, D, C, X, A] :: TS): Encoder[F, Elem, (Elem, C[A] :: TA)] =
+        Encoder[F, Elem, (Elem, C[A] :: TA)] { case (parent, value) =>
           val hc :: te = enc
           val ha :: ta = value
           val he = toEncoder(hc)
 
           val hEnc = Encoder[F, Elem, Elem] { e =>
-            val encToParent = Encoder[F, Elem, X](x => appendToElem(e, x, he.descriptor.identifier).point[F])
+            val encToParent = Encoder[F, Elem, C[X]](x => appendToElem(e, x, he.descriptor.identifier).point[F])
             (encToParent ~ he.encoder).encode(ha)
           }
 

@@ -23,17 +23,25 @@ private[xml] object HListDecoder {
 
     }
 
-  implicit def hConsDecoder[F[_], C[_[_], _, _, _], D, X, A, TS <: HList, TA <: HList](implicit
-                                                                                       monadEv: Monad[F],
-                                                                                       toDecoder: ToXmlDecoder[C],
-                                                                                       getFromElem: GetFromElem[D, X],
-                                                                                       tailDecoder: HListDecoder[F, TS, TA]): HListDecoder[F, C[F, D, X, A] :: TS, A :: TA] =
-    new HListDecoder[F, C[F, D, X, A] :: TS, A :: TA] {
-      override def apply(dec: C[F, D, X, A] :: TS, e: Elem): Result[F, A :: TA] = {
+  implicit def hConsDecoder[
+  F[_],
+  CC[_[_], _, _[_], _, _],
+  D,
+  C[_],
+  X,
+  A,
+  TS <: HList,
+  TA <: HList](implicit
+               monadEv: Monad[F],
+               toDecoder: ToXmlDecoder[CC],
+               getFromElem: GetFromElem[F, D, C, X],
+               tailDecoder: HListDecoder[F, TS, TA]): HListDecoder[F, CC[F, D, C, X, A] :: TS, C[A] :: TA] =
+    new HListDecoder[F, CC[F, D, C, X, A] :: TS, C[A] :: TA] {
+      override def apply(dec: CC[F, D, C, X, A] :: TS, e: Elem): Result[F, C[A] :: TA] = {
         val hc :: td = dec
         val hd = toDecoder(hc)
-        val x = getFromElem(e, hd.descriptor.identifier)
-        val xResult = Result.fromDisjunction[F, X](x.point[F], hd.descriptor.name)
+        val x = getFromElem(e, hd.descriptor.identifier, hd.filter)
+        val xResult = Result.fromDisjunction[F, C[X]](x, hd.descriptor.name)
         val a = xResult.monadic.flatMap(hd.dec(_).monadic).applicative
         Apply[Result[F, ?]].apply2(a, tailDecoder(td, e)) { _ :: _ }
       }

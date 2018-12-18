@@ -3,96 +3,64 @@ package ch.srf.xml
 import ch.srf.xml.util.{CompactHList, Flatten}
 import scalaz.syntax.contravariant._
 import scalaz.syntax.traverse._
+import scalaz.Id.Id
 import scalaz.{@@, Monad, Tag, Traverse}
 
 import scala.xml.Elem
 
-sealed abstract class XmlEncoder[F[_]:Monad, D, X, A] {
-  outer =>
+final case class XmlEncoder[F[_]:Monad, D, C[_], X, A](descriptor: Descriptor[D],
+                                                       encoder: Encoder[F, C[X], C[A]]) {
 
-  def descriptor: Descriptor[D]
-
-  def encoder: Encoder[F, X, A]
-
-  def as[B](implicit enc: Encoder[F, A, B]): XmlEncoder[F, D, X, B] =
+  def as[B](implicit enc: Encoder[F, C[A], C[B]]): XmlEncoder[F, D, C, X, B] =
     this ~ enc
 
-  def ~[B](enc: Encoder[F, A, B]): XmlEncoder[F, D, X, B] =
-    new XmlEncoder[F, D, X, B] {
+  def ~[B](enc: Encoder[F, C[A], C[B]]): XmlEncoder[F, D, C, X, B] =
+    XmlEncoder[F, D, C, X, B](descriptor, encoder ~ enc)
 
-      override def descriptor: Descriptor[D] =
-        outer.descriptor
-
-      override def encoder: Encoder[F, X, B] =
-        outer.encoder ~ enc
-    }
-
-  def skip[B](implicit ev: Flatten[A, B]): XmlEncoder[F, D, X, B] =
+  def skip[B](implicit ev: Flatten[C[A], C[B]]): XmlEncoder[F, D, C, X, B] =
     this ~ Encoder.fromFunction(ev.from)
 
 
-  def encode(a: A): F[X] =
+  def encode(a: C[A]): F[C[X]] =
     encoder.encode(a)
 }
 
 object XmlEncoder {
 
-  def collection[F[_]:Monad, C[_]:Traverse, D, X, A](enc: XmlEncoder[F, D, X, A]): XmlEncoder[F, D, C[X], C[A]] =
-    new XmlEncoder[F, D, C[X], C[A]] {
+  def collection[F[_]:Monad, C[_]:Traverse, D, X, A](enc: XmlEncoder[F, D, Id, X, A]): XmlEncoder[F, D, C, X, A] =
+    XmlEncoder[F, D, C, X, A](enc.descriptor,  Encoder(_.traverse(enc.encoder.encode)))
 
-      override def descriptor: Descriptor[D] =
-        enc.descriptor
+  private def textEncoder[F[_]:Monad, T]: XmlEncoder[F, Unit, Id, String @@ T, String] =
+    XmlEncoder[F, Unit, Id, String @@ T, String](
+      Descriptor.text,
+      Encoder.fromFunction(v => Tag.of[T](v))
+    )
 
-      override def encoder: Encoder[F, C[X], C[A]] =
-        Encoder(_.traverse(enc.encoder.encode))
-
-    }
-
-
-  private def textEncoder[F[_]:Monad, T]: XmlEncoder[F, Unit, String @@ T, String] =
-    new XmlEncoder[F, Unit, String @@ T, String] {
-
-      override def encoder: Encoder[F, String @@ T, String] =
-        Encoder.fromFunction(v => Tag.of[T](v))
-
-      override def descriptor: Descriptor[Unit] =
-        Descriptor.text
-
-    }
-
-  def text[F[_]:Monad]: XmlEncoder[F, Unit, String @@ TextValue, String] =
+  def text[F[_]:Monad]: XmlEncoder[F, Unit, Id, String @@ TextValue, String] =
     textEncoder[F, TextValue]
 
-  def nonEmptyText[F[_]:Monad]: XmlEncoder[F, Unit, String @@ NonEmptyTextValue, String] =
+  def nonEmptyText[F[_]:Monad]: XmlEncoder[F, Unit, Id, String @@ NonEmptyTextValue, String] =
     textEncoder[F, NonEmptyTextValue]
 
-  def attr[F[_]:Monad](name: String): XmlEncoder[F, String, String @@ AttrValue, String] =
-    new XmlEncoder[F, String, String @@ AttrValue, String] {
-      outer =>
-
-      override def encoder: Encoder[F, String @@ AttrValue, String] =
-        Encoder.fromFunction(v => Tag.of[AttrValue](v))
-
-      override def descriptor: Descriptor[String] =
-        Descriptor.attr(name)
-
-    }
+  def attr[F[_]:Monad](name: String): XmlEncoder[F, String, Id, String @@ AttrValue, String] =
+    XmlEncoder[F, String, Id, String @@ AttrValue, String](
+      Descriptor.attr(name),
+      Encoder.fromFunction(v => Tag.of[AttrValue](v))
+    )
 
   def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
                                 (implicit
                                  hListEncoder: HListEncoder[F, CS, C],
-                                 compact: CompactHList[C, A]): XmlEncoder[F, String, Elem, A] =
-    new XmlEncoder[F, String, Elem, A] {
+                                 compact: CompactHList[C, A]): XmlEncoder[F, String, Id, Elem, A] = {
 
-      private def compactEncoder: Encoder[F, C, A] =
-        Encoder.fromFunction[F, C, A](compact.from)
+    def compactEncoder: Encoder[F, C, A] =
+      Encoder.fromFunction[F, C, A](compact.from)
 
-      def encoder: Encoder[F, Elem, A] =
-        hListEncoder.apply(children).contramap[C]((<dummy/>.copy(label = name), _)) ~ compactEncoder
+    new XmlEncoder[F, String, Id, Elem, A](
+      Descriptor.elem(name),
+      hListEncoder.apply(children).contramap[C]((<dummy/>.copy(label = name), _)) ~ compactEncoder
+    )
 
-      override def descriptor: Descriptor[String] =
-        Descriptor.elem(name)
-
-    }
+  }
 
 }

@@ -36,7 +36,7 @@ XML validation and binding library.
 
 Supported cardinalities for node collections:
 
-    one(…)         -> A
+    …              -> A
     optional(…)    -> Option[A]
     oneOrMore(…)   -> NonEmptyList[A]
     zeroOrMore(…)  -> List[A]
@@ -50,8 +50,8 @@ Supported cardinalities for node collections:
 Attributes, text and child elements are declared as children:
 
     elem3("name",
-      one(attr(…)),
-      one(elem1("child", …)),
+      attr(…),
+      elem1("child", …),
       text
     )
 
@@ -61,7 +61,7 @@ Attributes, text and child elements are declared as children:
 
 Mandatory/optional attributes:
 
-    one(attr("name"))       -> String
+    attr("name")            -> String
     optional(attr("name"))  -> Option[String]
 
 #### Text
@@ -70,14 +70,14 @@ There are two flavours of handling text:
 
 By combining `nonEmptyText` with the `one` and `optional` cardinalities. In this case it is assured that no empty text values are emitted:
 
-    one(nonEmptyText)       -> String
+    nonEmptyText            -> String
     optional(nonEmptyText)  -> Option[String]
 
 By using `text` directly. In this case an empty text value are emitted if the parent element doesn't contain any text:
 
     text                    -> String
 
-The schema `one(nonEmptyText)` is equivalent to `text.ensure(nonEmpty)`.
+The schema `nonEmptyText` is equivalent to `text.ensure(nonEmpty)`.
 
 ### Assertions
 
@@ -126,14 +126,14 @@ In this example we use the simple schema which targets the `scalaz.Id.Id` monad:
     final case class Bar(c: String, d: Option[String])
 
     val schema =
-      one(elem3("foo",
-        one(attr("a")),
+      elem3("foo",
+        attr("a"),
         optional(attr("b")),
         zeroOrMore(elem2("bar",
-          one(attr("c")),
+          attr("c"),
           optional(attr("d"))
         ))
-      ))
+      )
 
     val result: NonEmptyList[String] \/ Foo =
       schema.decode(<foo>…</foo>)
@@ -156,16 +156,16 @@ Schemas can be composed by including other schemas. A codec schema can be includ
 
     val barElem =
       elem2("bar",
-        one(attr("c")),
+        attr("c"),
         optional(attr("d"))
       ).as[Bar]
 
     val fooElem =
-      one(elem3("foo",
-        one(attr("a")),
+      elem3("foo",
+        attr("a"),
         optional(attr("b")),
         zeroOrMore(barElem) // Include other schema
-      )).as[Foo]
+      ).as[Foo]
 
     val result: NonEmptyList[String] \/ Foo = fooElem.decode(<foo></foo>)
 
@@ -195,7 +195,7 @@ If the target type of a schema is a `HList` that is the generic representation o
 
     final case class Bar(c: String, d: Option[String])
 
-    val barElem = elem2("bar", one(attr("c")), optional(attr("d"))).as[Bar]
+    val barElem = elem2("bar", attr("c"), optional(attr("d"))).as[Bar]
 
 ### Implementing custom codecs
 
@@ -261,3 +261,40 @@ Decoding XML targeting the `EnvReader` effect monad:
       .decode(xml)
       .run(env) // Execute the effect
 
+#### Conditional Decoding
+
+It is possible to conditionally decode nodes using the `when` method. In the following example, the element is only decoded if it has an `id` attribute, otherwise it is ignored:
+
+    elem1("foo", …)
+      .when(_.attribute("id").isDefined)
+      .as[FooWithId]
+
+A typical use-case is decoding different types from elements with the same name. In this case the `when` function can be used as discriminator:
+
+      sealed trait Child
+
+      final case class Foo(text: String) extends Child
+      final case class Bar(text: String) extends Child
+
+      final case class FooBar(foo: Foo, bar: Bar)
+
+      def attrEquals(name: String, value: String)(e: Elem): Boolean =
+        (e \ s"@$name").headOption.map(_.text).contains(value)
+
+      import Dsl.simple.decode._
+
+      val elem =
+        elem2("parent",
+          elem1("child", text).when(attrEquals("type", "foo")).as[Foo],
+          elem1("child", text).when(attrEquals("type", "bar")).as[Bar],
+        ).as[FooBar]
+    
+      val xml =
+        <parent>
+          <child type="foo">1</child>
+          <child type="bar">2</child>
+        </parent>
+
+      elem.decode(xml) // FooBar(Foo("1"), Bar("2"))
+
+The `when` function accepts a function which returns an effectful value `F[Boolean]`, so it is possible to use effects (e.g. read values from an environment using a `Reader`).
