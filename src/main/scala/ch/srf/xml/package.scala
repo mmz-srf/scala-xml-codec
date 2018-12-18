@@ -10,6 +10,7 @@ package object xml {
   type ElemEncoder[F[_], C[_], A] = XmlEncoder[F, String, C, Elem, A]
   type ElemCodec[F[_], C[_], A] = XmlCodec[F, String, C, Elem, A]
 
+  // Alternative to scalaz.Id.Id to avoid "cyclic aliasing or subtyping" compiler error
   type Single[A] = A
 
 }
