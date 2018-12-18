@@ -1,10 +1,11 @@
-package ch.srf.xml
+package ch.srf.xml.auto
 
 import java.time.LocalDate
 
 import ch.srf.xml.Codecs._
+import ch.srf.xml.PrettyPrint
 import org.specs2.mutable.Specification
-import org.specs2.scalaz.DisjunctionMatchers._
+import org.specs2.scalaz.DisjunctionMatchers.be_\/-
 import scalaz.Id.Id
 import scalaz.{@@, NonEmptyList}
 

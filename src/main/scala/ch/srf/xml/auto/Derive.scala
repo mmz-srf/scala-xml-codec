@@ -1,5 +1,6 @@
-package ch.srf.xml
+package ch.srf.xml.auto
 
+import ch.srf.xml._
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.{@@, Monad, NonEmptyList, Traverse, \/}

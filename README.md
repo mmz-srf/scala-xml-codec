@@ -273,6 +273,7 @@ The following rules apply:
 
 Attribute and element names are computed from the names of the corresponding field and class names using a notation function.
 
+    import ch.srf.xml.auto.Derive
 
     final case class Foo(name: String, bars: List[Bar])
     final case class Bar(num: Int)
