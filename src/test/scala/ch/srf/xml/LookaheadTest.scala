@@ -26,10 +26,10 @@ object LookaheadTest extends Specification {
 
     val elem =
       elem4("elems",
-        elem1("elem", attr("foo")).as[Foo].when(_.attribute("foo").isDefined),
-        optional(elem1("elem", attr("bar")).as[Bar].when(_.attribute("bar").isDefined)),
-        zeroOrMore(elem1("elem", attr("baz")).as[Baz].when(_.attribute("baz").isDefined)),
-        oneOrMore(elem1("elem", attr("qux")).as[Qux].when(_.attribute("qux").isDefined))
+        when(elem1("elem", attr("foo")).as[Foo])(_.attribute("foo").isDefined),
+        optional(when(elem1("elem", attr("bar")).as[Bar])(_.attribute("bar").isDefined)),
+        zeroOrMore(when(elem1("elem", attr("baz")).as[Baz])(_.attribute("baz").isDefined)),
+        oneOrMore(when(elem1("elem", attr("qux")).as[Qux])(_.attribute("qux").isDefined))
       ).as[FooBarBaz]
 
     "correctly decode valid XML" in {
@@ -122,13 +122,9 @@ object LookaheadTest extends Specification {
     val personElem =
       elem2("soldiers",
 
-        elem1("soldier", attr("name"))
-          .when(isA[Sergeant])
-          .as[Sergeant],
+        when(elem1("soldier", attr("name")).as[Sergeant])(isA[Sergeant]),
 
-        zeroOrMore(
-          elem1("soldier", attr("id")).as[Private].when(isA[Private])
-        )
+        zeroOrMore(when(elem1("soldier", attr("id")).as[Private])(isA[Private]))
 
       ) ~ Decoder.fromFunction {
         v: Soldier :: List[Soldier] :: HNil =>
@@ -175,8 +171,8 @@ object LookaheadTest extends Specification {
 
       val elem =
         elem2("parent",
-          elem1("child", text).when(attrEquals("type", "foo")).as[Foo],
-          elem1("child", text).when(attrEquals("type", "bar")).as[Bar]
+          when(elem1("child", text).as[Foo])(attrEquals("type", "foo")),
+          when(elem1("child", text).as[Bar])(attrEquals("type", "bar"))
         ).as[FooBar]
 
       val xml =

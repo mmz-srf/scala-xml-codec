@@ -4,6 +4,7 @@ import ch.srf.xml.util.{CompactHList, Flatten}
 import scalaz.std.string.stringInstance
 import scalaz.syntax.all._
 import scalaz.syntax.tag._
+import scalaz.Id.Id
 import scalaz.{@@, Monad, NonEmptyList, \/}
 
 import scala.xml.Elem
@@ -30,36 +31,52 @@ final case class XmlDecoder[F[_]:Monad, D, X, A](descriptor: Descriptor[D],
   def decode(x: X): F[NonEmptyList[String] \/ A] =
     dec(x).leftAsStrings
 
-  def decodeFromParent(e: Elem)(implicit ev: GetFromElem[F, D, X]): F[NonEmptyList[String] \/ A] = {
-    val decoder = Decoder[F, Elem, X](e => ev(e, descriptor.identifier, filter))
+  def decodeFromParent(e: Elem): F[NonEmptyList[String] \/ A] = {
+    val decoder = Decoder[F, Elem, X](getFromElem)
     Result.fromDisjunction(decoder.decode(e), descriptor.name).monadic.flatMap(dec(_).monadic).applicative.leftAsStrings
   }
-
-  def when(filter: X => F[Boolean]): XmlDecoder[F, D, X, A] =
-    this.copy(filter = filter)
 
 }
 
 object XmlDecoder {
 
+  private def nopFilter[F[_]:Monad, A]: A => F[Boolean] = _ => true.point[F]
+
   def collection[F[_]:Monad, C[_], D, X, A](d: XmlDecoder[F, D, X, A],
                                             cd: CardinalityDecoder[F, C, X, A])
                                            (implicit
-                                           getFromElem: GetFromElem[F, D, C[X]])
-  : XmlDecoder[F, D, C[X], C[A]] =
+                                            getFromElem: GetFromElem[F, D, C, X]): XmlDecoder[F, D, C[X], C[A]] =
     XmlDecoder[F, D, C[X], C[A]](
       d.descriptor,
       cd.decode(d.dec, _),
-      _ => true.point[F],
-      e => getFromElem.apply(e, d.descriptor.identifier, d.filter)
+      nopFilter,
+      getFromElem(_, d.descriptor.identifier, d.filter)
     )
 
-  private def textDecoder[F[_]:Monad, T]: XmlDecoder[F, Unit, String @@ T, String] =
-    XmlDecoder[F, Unit, String @@ T, String](
-      Descriptor.text,
-      x => Result.success(x.unwrap).prependPath(Descriptor.text.name, None),
-      _ => true.point[F]
+  def when[F[_]:Monad, D, X, A](d: XmlDecoder[F, D, X, A], filter: X => F[Boolean])
+                               (implicit
+                                getFromElem: GetFromElem[F, D, Id, X]): XmlDecoder[F, D, X, A] =
+    XmlDecoder[F, D, X, A](
+      d.descriptor,
+      d.dec,
+      filter,
+      getFromElem(_, d.descriptor.identifier, filter)
     )
+
+  private def textDecoder[
+  F[_]: Monad,
+  T](implicit
+     getFromElem: GetFromElem[F, Unit, Id, String @@ T]): XmlDecoder[F, Unit, String @@ T, String] = {
+
+    val descriptor = Descriptor.text
+
+    XmlDecoder[F, Unit, String @@ T, String](
+      descriptor,
+      x => Result.success(x.unwrap).prependPath(Descriptor.text.name, None),
+      nopFilter,
+      getFromElem.apply(_, descriptor.identifier, nopFilter)
+    )
+  }
 
   def text[F[_]:Monad]: XmlDecoder[F, Unit, String @@ TextValue, String] =
     textDecoder[F, TextValue]
@@ -67,17 +84,25 @@ object XmlDecoder {
   def nonEmptyText[F[_]:Monad]: XmlDecoder[F, Unit, String @@ NonEmptyTextValue, String] =
     textDecoder[F, NonEmptyTextValue]
 
-  def attr[F[_]:Monad](name: String): XmlDecoder[F, String, String @@ AttrValue, String] =
+  def attr[F[_]: Monad](name: String)
+                       (implicit getFromElem: GetFromElem[F, String, Id, String @@ AttrValue])
+  : XmlDecoder[F, String, String @@ AttrValue, String] = {
+
+    val descriptor = Descriptor.attr(name)
+
     XmlDecoder[F, String, String @@ AttrValue, String](
-      Descriptor.attr(name),
+      descriptor,
       x => Result.success(x.unwrap).prependPath(Descriptor.attr(name).name, None),
-      _ => true.point[F]
+      nopFilter,
+      getFromElem(_, descriptor.identifier, nopFilter)
     )
+  }
 
   def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
                                 (implicit
                                  hListDecoder: HListDecoder[F, CS, C],
-                                 compact: CompactHList[C, A]): XmlDecoder[F, String, Elem, A] = {
+                                 compact: CompactHList[C, A],
+                                 getFromElem: GetFromElem[F, String, Id, Elem]): XmlDecoder[F, String, Elem, A] = {
 
     val descriptor = Descriptor.elem(name)
 
@@ -92,7 +117,8 @@ object XmlDecoder {
         .flatMap(_ => hListDecoder(children, e).prependPath(descriptor.name, None).monadic)
         .map(compact.to)
         .applicative,
-      _ => true.point[F]
+      nopFilter,
+      getFromElem(_, descriptor.identifier, nopFilter)
     )
 
   }

@@ -8,13 +8,19 @@ import shapeless.{::, HList, HNil}
 
 class CodecDsl[F[_]:Monad] extends EnsureOps {
 
-  def optional[S, D, X, A](codec: XmlCodec[F, D, X, A]): XmlCodec[F, D, Option[X], Option[A]] =
+  def optional[S, D, X, A](codec: XmlCodec[F, D, X, A])
+                          (implicit getFromElem: GetFromElem[F, D, Option, X])
+  : XmlCodec[F, D, Option[X], Option[A]] =
     XmlCodec.collection[F, Option, D, X, A](codec, CardinalityDecoder.option)
 
-  def zeroOrMore[S, D, X, A](codec: XmlCodec[F, D, X, A]): XmlCodec[F, D, List[X], List[A]] =
+  def zeroOrMore[S, D, X, A](codec: XmlCodec[F, D, X, A])
+                            (implicit getFromElem: GetFromElem[F, D, List, X])
+  : XmlCodec[F, D, List[X], List[A]] =
     XmlCodec.collection[F, List, D, X, A](codec, CardinalityDecoder.list)
 
-  def oneOrMore[S, D, X, A](codec: XmlCodec[F, D, X, A]): XmlCodec[F, D, NonEmptyList[X], NonEmptyList[A]] =
+  def oneOrMore[S, D, X, A](codec: XmlCodec[F, D, X, A])
+                           (implicit getFromElem: GetFromElem[F, D, NonEmptyList, X])
+  : XmlCodec[F, D, NonEmptyList[X], NonEmptyList[A]] =
     XmlCodec.collection[F, NonEmptyList, D, X, A](codec, CardinalityDecoder.nel)
 
   def attr(name: String): XmlCodec[F, String, String @@ AttrValue, String] =

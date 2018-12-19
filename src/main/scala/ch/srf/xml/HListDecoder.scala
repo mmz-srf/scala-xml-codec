@@ -33,13 +33,12 @@ private[xml] object HListDecoder {
   TA <: HList](implicit
                monadEv: Monad[F],
                toDecoder: ToXmlDecoder[C],
-               getFromElem: GetFromElem[F, D, X],
                tailDecoder: HListDecoder[F, TS, TA]): HListDecoder[F, C[F, D, X, A] :: TS, A :: TA] =
     new HListDecoder[F, C[F, D, X, A] :: TS, A :: TA] {
       override def apply(dec: C[F, D, X, A] :: TS, e: Elem): Result[F, A :: TA] = {
         val hc :: td = dec
         val hd = toDecoder(hc)
-        val x = getFromElem(e, hd.descriptor.identifier, hd.filter)
+        val x = hd.getFromElem(e)
         val xResult = Result.fromDisjunction[F, X](x, hd.descriptor.name)
         val a = xResult.monadic.flatMap(hd.dec(_).monadic).applicative
         Apply[Result[F, ?]].apply2(a, tailDecoder(td, e)) { _ :: _ }

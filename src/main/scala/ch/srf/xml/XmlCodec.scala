@@ -26,24 +26,20 @@ final class XmlCodec[F[_]:Monad, D, X, A](val decoder: XmlDecoder[F, D, X, A],
   def decode(x: X): F[NonEmptyList[String] \/ A] =
     decoder.decode(x)
 
-  def decodeFromParent(e: Elem)(implicit ev: GetFromElem[F, D, X]): F[NonEmptyList[String] \/ A] =
+  def decodeFromParent(e: Elem): F[NonEmptyList[String] \/ A] =
     decoder.decodeFromParent(e)
 
   def encode(a: A): F[X] =
     encoder.encode(a)
-
-  def when(filter: X => F[Boolean]): XmlCodec[F, D, X, A] =
-    new XmlCodec[F, D, X, A](
-      decoder.when(filter),
-      encoder
-    )
 
 }
 
 object XmlCodec {
 
   def collection[F[_]:Monad, C[_], D, X, A](codec: XmlCodec[F, D, X, A], cd: CardinalityDecoder[F, C, X, A])
-                                           (implicit traverseEv: Traverse[C]): XmlCodec[F, D, C[X], C[A]] =
+                                           (implicit
+                                            traverseEv: Traverse[C],
+                                            getFromElem: GetFromElem[F, D, C, X]): XmlCodec[F, D, C[X], C[A]] =
     new XmlCodec[F, D, C[X], C[A]](
       XmlDecoder.collection[F, C, D, X, A](codec.decoder, cd),
       XmlEncoder.collection[F, C, D, X, A](codec.encoder)
