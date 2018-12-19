@@ -18,7 +18,7 @@ final case class XmlDecoder[F[_]:Monad, D, C[_], X, A](descriptor: Descriptor[D]
 
   def ~[B](d: Decoder[F, C[A], C[B]]): XmlDecoder[F, D, C, X, B] =
     this.copy(
-      dec = x => dec(x).monadic.flatMap(a => Result.fromDisjunction(d.decode(a), descriptor.name).monadic).applicative,
+      dec = x => dec(x).monadic.flatMap(a => Result.fromDisjunction(d.decode(a), descriptor.name).monadic).applicative
     )
 
   def ensure(e: Ensure[F, C[A]]): XmlDecoder[F, D, C, X, A] =
