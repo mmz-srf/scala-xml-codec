@@ -34,6 +34,16 @@ final case class XmlDecoder[F[_]:Monad, D, X, A](descriptor: Descriptor[D],
   def decodeFromParent(e: Elem): F[NonEmptyList[String] \/ A] =
     getFromElem(e).monadic.flatMap(dec(_).monadic).applicative.leftAsStrings
 
+  def when(predicate: XmlDecoder[F, D, X, Boolean])
+          (implicit
+           getFromElem: GetFromElem[F, D, Id, X]): XmlDecoder[F, D, X, A] =
+    XmlDecoder[F, D, X, A](
+      descriptor,
+      dec,
+      predicate.dec,
+      getFromElem(_, descriptor.identifier, predicate.dec)
+    )
+
 }
 
 object XmlDecoder {
@@ -52,14 +62,14 @@ object XmlDecoder {
       getFromElem(_, d.descriptor.identifier, d.filter)
     )
 
-  def when[F[_]:Monad, D, X, A](d: XmlDecoder[F, D, X, A], filterD: XmlDecoder[F, D, X, Boolean])
+  def when[F[_]:Monad, D, X, A](predicate: XmlDecoder[F, D, X, Boolean], d: XmlDecoder[F, D, X, A])
                                (implicit
                                 getFromElem: GetFromElem[F, D, Id, X]): XmlDecoder[F, D, X, A] =
     XmlDecoder[F, D, X, A](
       d.descriptor,
       d.dec,
-      filterD.dec,
-      getFromElem(_, d.descriptor.identifier, filterD.dec)
+      predicate.dec,
+      getFromElem(_, d.descriptor.identifier, predicate.dec)
     )
 
   private def textDecoder[

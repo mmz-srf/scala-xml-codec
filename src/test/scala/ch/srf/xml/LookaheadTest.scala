@@ -1,14 +1,13 @@
 package ch.srf.xml
 
-import org.specs2.matcher.{MatchResult, NoTypedEqual}
+import org.specs2.matcher.NoTypedEqual
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.DisjunctionMatchers._
+import scalaz.Id.Id
 import scalaz.std.string.stringInstance
-import scalaz.syntax.applicative._
 import scalaz.syntax.either._
 import scalaz.syntax.equal._
 import scalaz.{NonEmptyList, Reader}
-import scalaz.Id.Id
 import shapeless.{::, HNil}
 
 import scala.reflect.runtime.universe.{Type, TypeTag, typeOf}
@@ -27,20 +26,17 @@ object LookaheadTest extends Specification with NoTypedEqual {
 
     final case class FooBarBaz(foo: Foo, bar: Option[Bar], baz: List[Baz], qux: NonEmptyList[Qux])
 
-    def discriminator(attrName: String): XmlDecoder[scalaz.Id.Id, String, Elem, Boolean] =
+    def discriminator(attrName: String): XmlDecoder[Id, String, Elem, Boolean] =
       elem1("elem", optional(attr(attrName))) ~ Decoder.fromFunction(_.isDefined)
-
-    def attributeIs(name: String, value: String)(e: Elem): Boolean =
-      (e \ s"@$name").headOption.map(_.text).contains(value)
 
     type R[A] = Result[Id, A]
 
     val elem =
       elem4("elems",
-        when(elem1("elem", attr("foo")).as[Foo], discriminator("foo")),
-        optional(when(elem1("elem", attr("bar")).as[Bar], discriminator("bar"))),
-        zeroOrMore(when(elem1("elem", attr("baz")).as[Baz], discriminator("baz"))),
-        oneOrMore(when(elem1("elem", attr("qux")).as[Qux], discriminator("qux")))
+        elem1("elem", attr("foo")).as[Foo].when(discriminator("foo")),
+        optional(elem1("elem", attr("bar")).as[Bar].when(discriminator("bar"))),
+        zeroOrMore(elem1("elem", attr("baz")).as[Baz].when(discriminator("baz"))),
+        oneOrMore(elem1("elem", attr("qux")).as[Qux].when(discriminator("qux")))
       ).as[FooBarBaz]
 
     "correctly decode valid XML" in {
@@ -132,11 +128,8 @@ object LookaheadTest extends Specification with NoTypedEqual {
 
     val personElem =
       elem2("soldiers",
-
-        when(elem1("soldier", attr("name")).as[Sergeant], isA[Sergeant]),
-
-        zeroOrMore(when(elem1("soldier", attr("id")).as[Private], isA[Private]))
-
+        elem1("soldier", attr("name")).as[Sergeant].when(isA[Sergeant]),
+        zeroOrMore(elem1("soldier", attr("id")).as[Private].when(isA[Private]))
       ) ~ Decoder.fromFunction {
         v: Soldier :: List[Soldier] :: HNil =>
         val sergeant :: privates :: HNil = v
@@ -177,13 +170,13 @@ object LookaheadTest extends Specification with NoTypedEqual {
 
       import Dsl.simple.decode._
 
-      def attrEquals(name: String, value: String): ElemDecoder[scalaz.Id.Id, Boolean] =
+      def attrEquals(name: String, value: String): ElemDecoder[Id, Boolean] =
         elem1("child", attr(name)) ~ Decoder.fromFunction(_ === value)
 
       val elem =
         elem2("parent",
-          when(elem1("child", text).as[Foo], attrEquals("type", "foo")),
-          when(elem1("child", text).as[Bar], attrEquals("type", "bar"))
+          elem1("child", text).as[Foo].when(attrEquals("type", "foo")),
+          elem1("child", text).as[Bar].when(attrEquals("type", "bar"))
         ).as[FooBar]
 
       val xml =

@@ -6,8 +6,8 @@ import scalaz.{@@, Monad, NonEmptyList, Traverse, \/}
 
 import scala.xml.Elem
 
-final class XmlCodec[F[_]:Monad, D, X, A](val decoder: XmlDecoder[F, D, X, A],
-                                          val encoder: XmlEncoder[F, D, X, A]) {
+final case class XmlCodec[F[_]:Monad, D, X, A](decoder: XmlDecoder[F, D, X, A],
+                                               encoder: XmlEncoder[F, D, X, A]) {
 
   def as[B](implicit codec: Codec[F, A, B]): XmlCodec[F, D, X, B] =
     this ~ codec
@@ -32,6 +32,14 @@ final class XmlCodec[F[_]:Monad, D, X, A](val decoder: XmlDecoder[F, D, X, A],
   def encode(a: A): F[X] =
     encoder.encode(a)
 
+  def when(predicate: XmlCodec[F, D, X, Boolean])
+          (implicit
+           getFromElem: GetFromElem[F, D, Id, X]): XmlCodec[F, D, X, A] =
+    XmlCodec[F, D, X, A](
+      XmlDecoder.when[F, D, X, A](predicate.decoder, decoder),
+      encoder
+    )
+
 }
 
 object XmlCodec {
@@ -40,27 +48,19 @@ object XmlCodec {
                                            (implicit
                                             traverseEv: Traverse[C],
                                             getFromElem: GetFromElem[F, D, C, X]): XmlCodec[F, D, C[X], C[A]] =
-    new XmlCodec[F, D, C[X], C[A]](
+    XmlCodec[F, D, C[X], C[A]](
       XmlDecoder.collection[F, C, D, X, A](codec.decoder, cd),
       XmlEncoder.collection[F, C, D, X, A](codec.encoder)
     )
 
-  def when[F[_]:Monad, D, X, A](codec: XmlCodec[F, D, X, A], filterCodec: XmlCodec[F, D, X, Boolean])
-                               (implicit
-                                getFromElem: GetFromElem[F, D, Id, X]): XmlCodec[F, D, X, A] =
-    new XmlCodec[F, D, X, A](
-      XmlDecoder.when[F, D, X, A](codec.decoder, filterCodec.decoder),
-      codec.encoder
-    )
-
   def text[F[_]:Monad]: XmlCodec[F, Unit, String @@ TextValue, String] =
-    new XmlCodec(XmlDecoder.text, XmlEncoder.text)
+    XmlCodec(XmlDecoder.text, XmlEncoder.text)
 
   def nonEmptyText[F[_]:Monad]: XmlCodec[F, Unit, String @@ NonEmptyTextValue, String] =
-    new XmlCodec(XmlDecoder.nonEmptyText, XmlEncoder.nonEmptyText)
+    XmlCodec(XmlDecoder.nonEmptyText, XmlEncoder.nonEmptyText)
 
   def attr[F[_]:Monad](name: String): XmlCodec[F, String, String @@ AttrValue, String] =
-    new XmlCodec(XmlDecoder.attr(name), XmlEncoder.attr(name))
+    XmlCodec(XmlDecoder.attr(name), XmlEncoder.attr(name))
 
   def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
                                 (implicit

@@ -263,38 +263,33 @@ Decoding XML targeting the `EnvReader` effect monad:
 
 #### Conditional Decoding
 
-It is possible to conditionally decode nodes using the `when` method. In the following example, the element is only decoded if it has an `id` attribute, otherwise it is ignored:
+It is possible to conditionally decode nodes using the `when` method. The method takes a decoder (or codec, if the codec mode is used) which returns a Boolean value for the input XML. If the return value is `true`, the element is decoded, otherwise it is ignored.
 
-    elem1("foo", …)
-      .when(_.attribute("id").isDefined)
-      .as[FooWithId]
+In the following example, the element is only decoded if it has an `id` attribute, otherwise it is ignored:
+
+    val hasId: ElemDecoder[Id, Boolean] =
+      elem1("foo", optional(attr("id"))) ~ Decoder.fromFunction(_.isDefined)
+
+    elem1("foo", …).as[Foo].when(hasId)
 
 A typical use-case is decoding different types from elements with the same name. In this case the `when` function can be used as discriminator:
 
-      sealed trait Child
+    sealed trait Child
 
-      final case class Foo(text: String) extends Child
-      final case class Bar(text: String) extends Child
+    final case class Foo(text: String) extends Child
+    final case class Bar(text: String) extends Child
 
-      final case class FooBar(foo: Foo, bar: Bar)
+    final case class FooBar(foo: Foo, bar: Bar)
 
-      def attrEquals(name: String, value: String)(e: Elem): Boolean =
-        (e \ s"@$name").headOption.map(_.text).contains(value)
+    import Dsl.simple.decode._
 
-      import Dsl.simple.decode._
+    def attrEquals(name: String, value: String): ElemDecoder[Id, Boolean] =
+      elem1("child", attr(name)) ~ Decoder.fromFunction(_ === value)
 
-      val elem =
-        elem2("parent",
-          elem1("child", text).when(attrEquals("type", "foo")).as[Foo],
-          elem1("child", text).when(attrEquals("type", "bar")).as[Bar],
-        ).as[FooBar]
-    
-      val xml =
-        <parent>
-          <child type="foo">1</child>
-          <child type="bar">2</child>
-        </parent>
+    val elem =
+      elem2("parent",
+        elem1("child", text).as[Foo].when(attrEquals("type", "foo")),
+        elem1("child", text).as[Bar].when(attrEquals("type", "bar"))
+      ).as[FooBar]
 
       elem.decode(xml) // FooBar(Foo("1"), Bar("2"))
-
-The `when` function accepts a function which returns an effectful value `F[Boolean]`, so it is possible to use effects (e.g. read values from an environment using a `Reader`).
