@@ -1,6 +1,7 @@
 package ch.srf.xml
 
 import ch.srf.xml.util.CompactHList
+import scalaz.Id.Id
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.{@@, Monad, NonEmptyList}
@@ -22,6 +23,10 @@ class CodecDsl[F[_]:Monad] extends EnsureOps {
                            (implicit getFromElem: GetFromElem[F, D, NonEmptyList, X])
   : XmlCodec[F, D, NonEmptyList[X], NonEmptyList[A]] =
     XmlCodec.collection[F, NonEmptyList, D, X, A](codec, CardinalityDecoder.nel)
+
+  def when[S, D, X, A](codec: XmlCodec[F, D, X, A], filterCodec: XmlCodec[F, D, X, Boolean])
+                      (implicit getFromElem: GetFromElem[F, D, Id, X]): XmlCodec[F, D, X, A] =
+    XmlCodec.when[F, D, X, A](codec, filterCodec)
 
   def attr(name: String): XmlCodec[F, String, String @@ AttrValue, String] =
     XmlCodec.attr(name)

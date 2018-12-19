@@ -21,6 +21,9 @@ private[xml] final case class Path(elems: NonEmptyList[(String, Option[Int])]) {
 
 private[xml] object Path {
 
+  def single(name: String) =
+    Path(NonEmptyList((name, None)))
+
   implicit def showInstance: Show[Path] =
     new Show[Path] {
       override def shows(path: Path): String =

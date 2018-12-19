@@ -11,8 +11,8 @@ import scala.xml.Elem
 
 final case class XmlDecoder[F[_]:Monad, D, X, A](descriptor: Descriptor[D],
                                                  dec: X => Result[F, A],
-                                                 filter: X => F[Boolean],
-                                                 getFromElem: Elem => F[String \/ X]) {
+                                                 filter: X => Result[F, Boolean],
+                                                 getFromElem: Elem => Result[F, X]) {
 
   def as[B](implicit dec: Decoder[F, A, B]): XmlDecoder[F, D, X, B] =
     this ~ dec
@@ -31,16 +31,15 @@ final case class XmlDecoder[F[_]:Monad, D, X, A](descriptor: Descriptor[D],
   def decode(x: X): F[NonEmptyList[String] \/ A] =
     dec(x).leftAsStrings
 
-  def decodeFromParent(e: Elem): F[NonEmptyList[String] \/ A] = {
-    val decoder = Decoder[F, Elem, X](getFromElem)
-    Result.fromDisjunction(decoder.decode(e), descriptor.name).monadic.flatMap(dec(_).monadic).applicative.leftAsStrings
-  }
+  def decodeFromParent(e: Elem): F[NonEmptyList[String] \/ A] =
+    getFromElem(e).monadic.flatMap(dec(_).monadic).applicative.leftAsStrings
 
 }
 
 object XmlDecoder {
 
-  private def nopFilter[F[_]:Monad, A]: A => F[Boolean] = _ => true.point[F]
+  private def nopFilter[F[_]:Monad, A]: A => Result[F, Boolean] =
+    _ => Result.success(true)
 
   def collection[F[_]:Monad, C[_], D, X, A](d: XmlDecoder[F, D, X, A],
                                             cd: CardinalityDecoder[F, C, X, A])
@@ -53,14 +52,14 @@ object XmlDecoder {
       getFromElem(_, d.descriptor.identifier, d.filter)
     )
 
-  def when[F[_]:Monad, D, X, A](d: XmlDecoder[F, D, X, A], filter: X => F[Boolean])
+  def when[F[_]:Monad, D, X, A](d: XmlDecoder[F, D, X, A], filterD: XmlDecoder[F, D, X, Boolean])
                                (implicit
                                 getFromElem: GetFromElem[F, D, Id, X]): XmlDecoder[F, D, X, A] =
     XmlDecoder[F, D, X, A](
       d.descriptor,
       d.dec,
-      filter,
-      getFromElem(_, d.descriptor.identifier, filter)
+      filterD.dec,
+      getFromElem(_, d.descriptor.identifier, filterD.dec)
     )
 
   private def textDecoder[

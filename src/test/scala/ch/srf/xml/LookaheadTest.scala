@@ -1,14 +1,20 @@
 package ch.srf.xml
 
+import org.specs2.matcher.{MatchResult, NoTypedEqual}
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.DisjunctionMatchers._
+import scalaz.std.string.stringInstance
+import scalaz.syntax.applicative._
+import scalaz.syntax.either._
+import scalaz.syntax.equal._
 import scalaz.{NonEmptyList, Reader}
+import scalaz.Id.Id
 import shapeless.{::, HNil}
 
 import scala.reflect.runtime.universe.{Type, TypeTag, typeOf}
 import scala.xml.Elem
 
-object LookaheadTest extends Specification {
+object LookaheadTest extends Specification with NoTypedEqual {
 
   "Decoding using lookahead" should {
 
@@ -21,15 +27,20 @@ object LookaheadTest extends Specification {
 
     final case class FooBarBaz(foo: Foo, bar: Option[Bar], baz: List[Baz], qux: NonEmptyList[Qux])
 
+    def discriminator(attrName: String): XmlDecoder[scalaz.Id.Id, String, Elem, Boolean] =
+      elem1("elem", optional(attr(attrName))) ~ Decoder.fromFunction(_.isDefined)
+
     def attributeIs(name: String, value: String)(e: Elem): Boolean =
       (e \ s"@$name").headOption.map(_.text).contains(value)
 
+    type R[A] = Result[Id, A]
+
     val elem =
       elem4("elems",
-        when(elem1("elem", attr("foo")).as[Foo])(_.attribute("foo").isDefined),
-        optional(when(elem1("elem", attr("bar")).as[Bar])(_.attribute("bar").isDefined)),
-        zeroOrMore(when(elem1("elem", attr("baz")).as[Baz])(_.attribute("baz").isDefined)),
-        oneOrMore(when(elem1("elem", attr("qux")).as[Qux])(_.attribute("qux").isDefined))
+        when(elem1("elem", attr("foo")).as[Foo], discriminator("foo")),
+        optional(when(elem1("elem", attr("bar")).as[Bar], discriminator("bar"))),
+        zeroOrMore(when(elem1("elem", attr("baz")).as[Baz], discriminator("baz"))),
+        oneOrMore(when(elem1("elem", attr("qux")).as[Qux], discriminator("qux")))
       ).as[FooBarBaz]
 
     "correctly decode valid XML" in {
@@ -108,23 +119,23 @@ object LookaheadTest extends Specification {
 
     type WeaponDirectoryReader[A] = Reader[WeaponDirectory, A]
 
-    def isA[C](e: Elem)(implicit typeTag: TypeTag[C]): WeaponDirectoryReader[Boolean] =
-      Reader(repo =>
-        (e \ "@weapon")
-          .headOption
-          .map(_.text)
-          .flatMap(repo.get)
-          .contains(typeTag.tpe))
-
     val dsl = Dsl[WeaponDirectoryReader]
     import dsl.decode._
+
+    def isA[C](implicit typeTag: TypeTag[C]): ElemDecoder[WeaponDirectoryReader, Boolean] = {
+
+      implicit val dec: Decoder[WeaponDirectoryReader, String, Boolean] =
+        Decoder(s => Reader(_.get(s).contains(typeTag.tpe).right))
+
+      elem1("soldier", attr("weapon")).as[Boolean]
+    }
 
     val personElem =
       elem2("soldiers",
 
-        when(elem1("soldier", attr("name")).as[Sergeant])(isA[Sergeant]),
+        when(elem1("soldier", attr("name")).as[Sergeant], isA[Sergeant]),
 
-        zeroOrMore(when(elem1("soldier", attr("id")).as[Private])(isA[Private]))
+        zeroOrMore(when(elem1("soldier", attr("id")).as[Private], isA[Private]))
 
       ) ~ Decoder.fromFunction {
         v: Soldier :: List[Soldier] :: HNil =>
@@ -164,15 +175,15 @@ object LookaheadTest extends Specification {
 
       final case class FooBar(foo: Foo, bar: Bar)
 
-      def attrEquals(name: String, value: String)(e: Elem): Boolean =
-        (e \ s"@$name").headOption.map(_.text).contains(value)
-
       import Dsl.simple.decode._
+
+      def attrEquals(name: String, value: String): ElemDecoder[scalaz.Id.Id, Boolean] =
+        elem1("child", attr(name)) ~ Decoder.fromFunction(_ === value)
 
       val elem =
         elem2("parent",
-          when(elem1("child", text).as[Foo])(attrEquals("type", "foo")),
-          when(elem1("child", text).as[Bar])(attrEquals("type", "bar"))
+          when(elem1("child", text).as[Foo], attrEquals("type", "foo")),
+          when(elem1("child", text).as[Bar], attrEquals("type", "bar"))
         ).as[FooBar]
 
       val xml =

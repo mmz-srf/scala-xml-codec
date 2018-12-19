@@ -45,6 +45,14 @@ object XmlCodec {
       XmlEncoder.collection[F, C, D, X, A](codec.encoder)
     )
 
+  def when[F[_]:Monad, D, X, A](codec: XmlCodec[F, D, X, A], filterCodec: XmlCodec[F, D, X, Boolean])
+                               (implicit
+                                getFromElem: GetFromElem[F, D, Id, X]): XmlCodec[F, D, X, A] =
+    new XmlCodec[F, D, X, A](
+      XmlDecoder.when[F, D, X, A](codec.decoder, filterCodec.decoder),
+      codec.encoder
+    )
+
   def text[F[_]:Monad]: XmlCodec[F, Unit, String @@ TextValue, String] =
     new XmlCodec(XmlDecoder.text, XmlEncoder.text)
 

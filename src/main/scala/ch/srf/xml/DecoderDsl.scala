@@ -20,9 +20,9 @@ class DecoderDsl[F[_]:Monad] extends EnsureOps {
   : XmlDecoder[F, D, NonEmptyList[X], NonEmptyList[A]] =
     XmlDecoder.collection[F, NonEmptyList, D, X, A](decoder, CardinalityDecoder.nel)
 
-  def when[S, D, X, A](decoder: XmlDecoder[F, D, X, A])(filter: X => F[Boolean])
-                      (implicit getFromElem: GetFromElem[F, D, Id, X]): XmlDecoder[F, D, X, A] =
-    XmlDecoder.when[F, D, X, A](decoder, filter)
+  def when[S, D, X, A, B](decoder: XmlDecoder[F, D, X, A], filterDecoder: XmlDecoder[F, D, X, Boolean])
+                         (implicit getFromElem: GetFromElem[F, D, Id, X]): XmlDecoder[F, D, X, A] =
+    XmlDecoder.when[F, D, X, A](decoder, filterDecoder)
 
   def attr(name: String): XmlDecoder[F, String, String @@ AttrValue, String] =
     XmlDecoder.attr(name)
