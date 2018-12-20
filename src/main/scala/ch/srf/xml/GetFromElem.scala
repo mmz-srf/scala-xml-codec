@@ -5,7 +5,7 @@ import scalaz.Id.Id
 import scalaz.syntax.all._
 import scalaz.syntax.std.list._
 import scalaz.syntax.std.option._
-import scalaz.{@@, Applicative, Monad, NonEmptyList, Tag, \/}
+import scalaz.{@@, Applicative, Monad, NonEmptyList, Tag}
 
 import scala.xml.Elem
 

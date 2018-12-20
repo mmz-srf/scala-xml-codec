@@ -1,6 +1,5 @@
 package ch.srf.xml
 
-import scalaz.Id.Id
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.syntax.foldable._
