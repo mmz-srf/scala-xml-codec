@@ -8,15 +8,18 @@ import shapeless.{::, HList, HNil}
 class DecoderDsl[F[_]:Monad] extends EnsureOps {
 
   def optional[S, D, X, A](decoder: XmlDecoder[F, D, X, A])
-                          (implicit getFromElem: GetFromElem[F, D, Option, X]): XmlDecoder[F, D, Option[X], Option[A]] =
+                          (implicit
+                           getFromElem: GetFromElem[F, D, Option, X]): XmlDecoder[F, D, Option[X], Option[A]] =
     XmlDecoder.collection[F, Option, D, X, A](decoder, CardinalityDecoder.option)
 
   def zeroOrMore[S, D, X, A](decoder: XmlDecoder[F, D, X, A])
-                            (implicit getFromElem: GetFromElem[F, D, List, X]): XmlDecoder[F, D, List[X], List[A]] =
+                            (implicit
+                             getFromElem: GetFromElem[F, D, List, X]): XmlDecoder[F, D, List[X], List[A]] =
     XmlDecoder.collection[F, List, D, X, A](decoder, CardinalityDecoder.list)
 
   def oneOrMore[S, D, X, A](decoder: XmlDecoder[F, D, X, A])
-                           (implicit getFromElem: GetFromElem[F, D, NonEmptyList, X])
+                           (implicit
+                            getFromElem: GetFromElem[F, D, NonEmptyList, X])
   : XmlDecoder[F, D, NonEmptyList[X], NonEmptyList[A]] =
     XmlDecoder.collection[F, NonEmptyList, D, X, A](decoder, CardinalityDecoder.nel)
 

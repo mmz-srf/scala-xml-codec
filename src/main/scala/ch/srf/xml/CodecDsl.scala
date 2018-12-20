@@ -1,7 +1,6 @@
 package ch.srf.xml
 
 import ch.srf.xml.util.CompactHList
-import scalaz.Id.Id
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.{@@, Monad, NonEmptyList}
@@ -10,17 +9,18 @@ import shapeless.{::, HList, HNil}
 class CodecDsl[F[_]:Monad] extends EnsureOps {
 
   def optional[S, D, X, A](codec: XmlCodec[F, D, X, A])
-                          (implicit getFromElem: GetFromElem[F, D, Option, X])
-  : XmlCodec[F, D, Option[X], Option[A]] =
+                          (implicit
+                           getFromElem: GetFromElem[F, D, Option, X]): XmlCodec[F, D, Option[X], Option[A]] =
     XmlCodec.collection[F, Option, D, X, A](codec, CardinalityDecoder.option)
 
   def zeroOrMore[S, D, X, A](codec: XmlCodec[F, D, X, A])
-                            (implicit getFromElem: GetFromElem[F, D, List, X])
-  : XmlCodec[F, D, List[X], List[A]] =
+                            (implicit
+                             getFromElem: GetFromElem[F, D, List, X]): XmlCodec[F, D, List[X], List[A]] =
     XmlCodec.collection[F, List, D, X, A](codec, CardinalityDecoder.list)
 
   def oneOrMore[S, D, X, A](codec: XmlCodec[F, D, X, A])
-                           (implicit getFromElem: GetFromElem[F, D, NonEmptyList, X])
+                           (implicit
+                            getFromElem: GetFromElem[F, D, NonEmptyList, X])
   : XmlCodec[F, D, NonEmptyList[X], NonEmptyList[A]] =
     XmlCodec.collection[F, NonEmptyList, D, X, A](codec, CardinalityDecoder.nel)
 
