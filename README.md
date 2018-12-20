@@ -36,10 +36,10 @@ XML validation and binding library.
 
 Supported cardinalities for node collections:
 
-    …              -> A
-    optional(…)    -> Option[A]
-    oneOrMore(…)   -> NonEmptyList[A]
-    zeroOrMore(…)  -> List[A]
+    …              → A
+    optional(…)    → Option[A]
+    oneOrMore(…)   → NonEmptyList[A]
+    zeroOrMore(…)  → List[A]
 
 #### Elements
 
@@ -61,8 +61,8 @@ Attributes, text and child elements are declared as children:
 
 Mandatory/optional attributes:
 
-    attr("name")            -> String
-    optional(attr("name"))  -> Option[String]
+    attr("name")            → String
+    optional(attr("name"))  → Option[String]
 
 #### Text
 
@@ -70,12 +70,12 @@ There are two flavours of handling text:
 
 By combining `nonEmptyText` with the `one` and `optional` cardinalities. In this case it is assured that no empty text values are emitted:
 
-    nonEmptyText            -> String
-    optional(nonEmptyText)  -> Option[String]
+    nonEmptyText            → String
+    optional(nonEmptyText)  → Option[String]
 
 By using `text` directly. In this case an empty text value are emitted if the parent element doesn't contain any text:
 
-    text                    -> String
+    text                    → String
 
 The schema `nonEmptyText` is equivalent to `text.ensure(nonEmpty)`.
 
