@@ -36,10 +36,10 @@ XML validation and binding library.
 
 Supported cardinalities for node collections:
 
-    one(…)         -> A
-    optional(…)    -> Option[A]
-    oneOrMore(…)   -> NonEmptyList[A]
-    zeroOrMore(…)  -> List[A]
+    …              → A
+    optional(…)    → Option[A]
+    oneOrMore(…)   → NonEmptyList[A]
+    zeroOrMore(…)  → List[A]
 
 #### Elements
 
@@ -50,8 +50,8 @@ Supported cardinalities for node collections:
 Attributes, text and child elements are declared as children:
 
     elem3("name",
-      one(attr(…)),
-      one(elem1("child", …)),
+      attr(…),
+      elem1("child", …),
       text
     )
 
@@ -61,8 +61,8 @@ Attributes, text and child elements are declared as children:
 
 Mandatory/optional attributes:
 
-    one(attr("name"))       -> String
-    optional(attr("name"))  -> Option[String]
+    attr("name")            → String
+    optional(attr("name"))  → Option[String]
 
 #### Text
 
@@ -70,14 +70,14 @@ There are two flavours of handling text:
 
 By combining `nonEmptyText` with the `one` and `optional` cardinalities. In this case it is assured that no empty text values are emitted:
 
-    one(nonEmptyText)       -> String
-    optional(nonEmptyText)  -> Option[String]
+    nonEmptyText            → String
+    optional(nonEmptyText)  → Option[String]
 
 By using `text` directly. In this case an empty text value are emitted if the parent element doesn't contain any text:
 
-    text                    -> String
+    text                    → String
 
-The schema `one(nonEmptyText)` is equivalent to `text.ensure(nonEmpty)`.
+The schema `nonEmptyText` is equivalent to `text.ensure(nonEmpty)`.
 
 ### Assertions
 
@@ -126,14 +126,14 @@ In this example we use the simple schema which targets the `scalaz.Id.Id` monad:
     final case class Bar(c: String, d: Option[String])
 
     val schema =
-      one(elem3("foo",
-        one(attr("a")),
+      elem3("foo",
+        attr("a"),
         optional(attr("b")),
         zeroOrMore(elem2("bar",
-          one(attr("c")),
+          attr("c"),
           optional(attr("d"))
         ))
-      ))
+      )
 
     val result: NonEmptyList[String] \/ Foo =
       schema.decode(<foo>…</foo>)
@@ -156,16 +156,16 @@ Schemas can be composed by including other schemas. A codec schema can be includ
 
     val barElem =
       elem2("bar",
-        one(attr("c")),
+        attr("c"),
         optional(attr("d"))
       ).as[Bar]
 
     val fooElem =
-      one(elem3("foo",
-        one(attr("a")),
+      elem3("foo",
+        attr("a"),
         optional(attr("b")),
         zeroOrMore(barElem) // Include other schema
-      )).as[Foo]
+      ).as[Foo]
 
     val result: NonEmptyList[String] \/ Foo = fooElem.decode(<foo></foo>)
 
@@ -195,7 +195,7 @@ If the target type of a schema is a `HList` that is the generic representation o
 
     final case class Bar(c: String, d: Option[String])
 
-    val barElem = elem2("bar", one(attr("c")), optional(attr("d"))).as[Bar]
+    val barElem = elem2("bar", attr("c"), optional(attr("d"))).as[Bar]
 
 ### Implementing custom codecs
 
