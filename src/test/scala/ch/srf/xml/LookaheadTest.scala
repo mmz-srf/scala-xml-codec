@@ -22,7 +22,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
     final case class Foo(foo: String)
     final case class Bar(bar: String)
     final case class Baz(baz: String)
-    final case class Qux(qux: String)
+    final case class Qux(qux: String, value: String)
 
     final case class FooBarBaz(foo: Foo, bar: Option[Bar], baz: List[Baz], qux: NonEmptyList[Qux])
 
@@ -36,7 +36,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
         elem1("elem", attr("foo")).as[Foo].when(discriminator("foo")),
         optional(elem1("elem", attr("bar")).as[Bar].when(discriminator("bar"))),
         zeroOrMore(elem1("elem", attr("baz")).as[Baz].when(discriminator("baz"))),
-        oneOrMore(elem1("elem", attr("qux")).as[Qux].when(discriminator("qux")))
+        oneOrMore(elem2("elem", attr("qux"), attr("value")).as[Qux].when(discriminator("qux")))
       ).as[FooBarBaz]
 
     "correctly decode valid XML" in {
@@ -47,15 +47,15 @@ object LookaheadTest extends Specification with NoTypedEqual {
           <elem bar="bar"/>
           <elem baz="baz 1"/>
           <elem baz="baz 2"/>
-          <elem qux="qux 1"/>
-          <elem qux="qux 2"/>
+          <elem qux="qux 1" value="a"/>
+          <elem qux="qux 2" value="b"/>
         </elems>
 
       val result = FooBarBaz(
         Foo("foo"),
         Option(Bar("bar")),
         List(Baz("baz 1"), Baz("baz 2")),
-        NonEmptyList(Qux("qux 1"), Qux("qux 2"))
+        NonEmptyList(Qux("qux 1", "a"), Qux("qux 2", "b"))
       )
 
       elem.decode(xml) should be_\/-(result)
@@ -65,7 +65,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
     "correctly report decoding errors for cardinality Id" in {
       val xml =
         <elems>
-          <elem qux="qux 1"/>
+          <elem qux="qux 1" value="a"/>
         </elems>
       elem.decode(xml) should be_-\/(NonEmptyList("elems/elem: Exactly one element <elem> expected, found 0"))
     }
@@ -76,7 +76,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
           <elem foo="foo"/>
           <elem bar="bar 1"/>
           <elem bar="bar 2"/>
-          <elem qux="qux 1"/>
+          <elem qux="qux 1" value="a"/>
         </elems>
       elem.decode(xml) should be_-\/(NonEmptyList("elems/elem: At most one element <elem> expected, found 2"))
     }
@@ -87,6 +87,17 @@ object LookaheadTest extends Specification with NoTypedEqual {
           <elem foo="foo"/>
         </elems>
       elem.decode(xml) should be_-\/(NonEmptyList("elems/elem: At least one element <elem> expected"))
+    }
+
+    "emit the correct position for decoding errors" in {
+      val xml =
+        <elems>
+          <elem foo="foo"/>
+          <elem bar="bar 1"/>
+          <elem baz="baz"/>
+          <elem qux="qux 1"/>
+        </elems>
+      elem.decode(xml) should be_-\/(NonEmptyList("elems/elem[4]/value: Attribute 'value' missing"))
     }
 
   }
