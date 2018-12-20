@@ -54,14 +54,14 @@ private[xml] object GetFromElem {
   implicit def nonEmptyTextInstance[F[_]:Monad]: GetFromElem[F, Unit, Id, String @@ NonEmptyTextValue] =
     apply[F, Unit, Id, String @@ NonEmptyTextValue]((elem, _, filter) =>
       flatMapResult(nonEmptyTextValue(elem, filter))(
-        o => Result.fromDisjunction(o.\/>("Text must not be empty").point[F], "text"))
+        o => Result.fromDisjunction(o.\/>("Text must not be empty").point[F], Descriptor.text.name))
     )
 
   implicit def textInstance[F[_]:Monad]: GetFromElem[F, Unit, Id, String @@ TextValue] =
     apply[F, Unit, Id, String @@ TextValue]((elem, _, filter) =>
       flatMapResult(
         Option(Tag.of[TextValue](elem.text)).filterM(filter))(
-        o => Result.fromDisjunction(o.\/>("No matching text found").point[F], "text"))
+        o => Result.fromDisjunction(o.\/>("No matching text found").point[F], Descriptor.text.name))
     )
 
   implicit def nonEmptyTextOptionInstance[F[_]

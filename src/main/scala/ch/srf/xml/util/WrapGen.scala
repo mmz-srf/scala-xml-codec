@@ -1,6 +1,6 @@
 package ch.srf.xml.util
 
-import shapeless.{Generic, HNil, ::}
+import shapeless.{::, Generic, HNil}
 
 private[xml] sealed trait WrapGen[T, R] {
 

@@ -1,7 +1,6 @@
 package ch.srf.xml
 
 import ch.srf.xml.Result.Monadic
-import ch.srf.xml.Result.Monadic
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import scalaz.scalacheck.ScalazArbitrary._

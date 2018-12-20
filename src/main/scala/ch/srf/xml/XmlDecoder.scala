@@ -1,10 +1,10 @@
 package ch.srf.xml
 
 import ch.srf.xml.util.{CompactHList, Flatten}
+import scalaz.Id.Id
 import scalaz.std.string.stringInstance
 import scalaz.syntax.all._
 import scalaz.syntax.tag._
-import scalaz.Id.Id
 import scalaz.{@@, Monad, NonEmptyList, \/}
 
 import scala.xml.Elem

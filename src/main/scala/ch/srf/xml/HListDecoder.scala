@@ -1,7 +1,6 @@
 package ch.srf.xml
 
-import scalaz.syntax.applicative._
-import scalaz.syntax.bind._
+import scalaz.syntax.monad._
 import scalaz.{Apply, Monad}
 import shapeless.{::, HList, HNil}
 

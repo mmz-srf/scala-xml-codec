@@ -2,8 +2,8 @@ package ch.srf.xml
 
 import ch.srf.xml.Encoder.fromFunction
 import ch.srf.xml.util.WrapGen
-import scalaz.{Contravariant, Monad}
 import scalaz.syntax.all._
+import scalaz.{Contravariant, Monad}
 
 import scala.annotation.implicitNotFound
 

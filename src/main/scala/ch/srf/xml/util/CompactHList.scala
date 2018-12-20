@@ -1,6 +1,6 @@
 package ch.srf.xml.util
 
-import shapeless.{HList, HNil, ::}
+import shapeless.{::, HList, HNil}
 
 private[xml] sealed trait CompactHList[A, B] {
   def to: A => B

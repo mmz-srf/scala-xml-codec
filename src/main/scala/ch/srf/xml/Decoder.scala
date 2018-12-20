@@ -4,7 +4,7 @@ import ch.srf.xml.util.WrapGen
 import scalaz.Isomorphism.<~~>
 import scalaz.syntax.all._
 import scalaz.syntax.std.option._
-import scalaz.{Monad, \/, Contravariant, EitherT, Kleisli, Compose, MonadTrans, Bind, ~>, ~~>}
+import scalaz.{Compose, Contravariant, EitherT, Kleisli, Monad, \/, ~~>}
 
 import scala.annotation.implicitNotFound
 

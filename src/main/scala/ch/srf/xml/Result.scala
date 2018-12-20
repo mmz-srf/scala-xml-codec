@@ -1,7 +1,7 @@
 package ch.srf.xml
 
 import scalaz.syntax.all._
-import scalaz.{Applicative, EitherT, Equal, Monad, NonEmptyList, \/, ~>, Functor}
+import scalaz.{Applicative, EitherT, Equal, Functor, Monad, NonEmptyList, \/, ~>}
 
 private[xml] final case class Result[F[_]:Applicative, A](value: F[Result.Errors \/ A]) {
   import Result._

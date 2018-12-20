@@ -1,9 +1,9 @@
 package ch.srf.xml.util
 
-import scalaz.{Monad, NonEmptyList}
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.syntax.monad._
+import scalaz.{Monad, NonEmptyList}
 
 private[xml] trait Flatten[A, B] {
   def to(a: A): B
