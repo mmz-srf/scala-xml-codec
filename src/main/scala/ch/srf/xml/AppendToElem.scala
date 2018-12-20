@@ -26,7 +26,7 @@ private[xml] object AppendToElem {
   /* ----- Attributes ----- */
 
   implicit def attrInstance: AppendToElem[String, String @@ AttrValue] =
-    apply[String, String @@ AttrValue]((e, a, name) => e % Attribute(None, name, Text(a.unwrap), Null))
+    apply((e, a, name) => e % Attribute(None, name, Text(a.unwrap), Null))
 
   implicit def attrOptionInstance[S]: AppendToElem[String, Option[String @@ AttrValue]] =
     apply((e, a, name) => a.map(s => e % Attribute(None, name, Text(s.unwrap), Null)).getOrElse(e))
