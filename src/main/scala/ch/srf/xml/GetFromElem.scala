@@ -10,17 +10,20 @@ import scalaz.{@@, Applicative, Monad, NonEmptyList, Tag}
 import scala.xml.Elem
 
 private[xml] sealed trait GetFromElem[F[_], D, C[_], X] {
+  import GetFromElem.Positioned
 
-  def apply(e: Elem, id: D, filter: X => Result[F, Boolean]): Result[F, C[X]]
+  def apply(e: Elem, id: D, filter: X => Result[F, Boolean]): Result[F, C[Positioned[X]]]
 
 }
 
 private[xml] object GetFromElem {
 
-  private def apply[F[_], D, C[_], X](f: (Elem, D, X => Result[F, Boolean]) => Result[F, C[X]])
+  private type Positioned[A] = (A, Option[Int])
+
+  private def apply[F[_], D, C[_], X](f: (Elem, D, X => Result[F, Boolean]) => Result[F, C[Positioned[X]]])
   : GetFromElem[F, D, C, X] =
     new GetFromElem[F, D, C, X] {
-      override def apply(e: Elem, id: D, filter: X => Result[F, Boolean]): Result[F,  C[X]] =
+      override def apply(e: Elem, id: D, filter: X => Result[F, Boolean]): Result[F,  C[Positioned[X]]] =
         f(e, id, filter)
     }
 
@@ -32,8 +35,10 @@ private[xml] object GetFromElem {
   private def getAttribute[F[_]:Applicative](e: Elem,
                                              name: String,
                                              filter: String @@ AttrValue => Result[F, Boolean])
-  : Result[F, Option[String @@ AttrValue]] =
-    e.attributes.asAttrMap.get(name).map(Tag.of[AttrValue](_)).filterM(filter)
+  : Result[F, Option[Positioned[String @@ AttrValue]]] =
+    e.attributes.asAttrMap.get(name).map(v => Tag.of[AttrValue](v))
+      .filterM(filter)
+      .map((_, None))
 
   implicit def attrInstance[F[_]:Monad]: GetFromElem[F, String, Id, String @@ AttrValue] =
     apply[F, String, Id, String @@ AttrValue]((elem, name, filter) =>
@@ -72,13 +77,16 @@ private[xml] object GetFromElem {
 
   private def elems[F[_]: Applicative](parent: Elem,
                                        name: String,
-                                       filter: Elem => Result[F, Boolean]): Result[F, List[Elem]] =
-    (parent \ name).toList.collect { case e: Elem => e }.filterM(filter)
+                                       filter: Elem => Result[F, Boolean]): Result[F, List[(Elem, Int)]] =
+    (parent \ name).toList
+      .zipWithIndex
+      .collect { case (e: Elem, pos) => (e, pos) }
+      .filterM { case (e, _) => filter(e) }
 
-  implicit def elemInstance[F[_]:Monad]: GetFromElem[F, String, Id, Elem] =
+  implicit def elemInstance[F[_]:Monad]: GetFromElem[F, String, Id, (Elem, Int)] =
     apply[F, String, Id, Elem]((elem, name, filter) =>
       flatMapResult(elems(elem, name, filter)) {
-        case h :: Nil => Result.success[F, Elem](h)
+        case h :: Nil => Result.success[F, (Elem, Int)](h)
         case l => Result
           .error[F, Elem](Path.single(name), s"Exactly one element <$name> expected, found ${l.size}")
       }
@@ -94,10 +102,10 @@ private[xml] object GetFromElem {
       }
     )
 
-  implicit def elemListInstance[F[_]: Applicative, CS]: GetFromElem[F, String, List, Elem] =
+  implicit def elemListInstance[F[_]: Applicative, CS]: GetFromElem[F, String, List, (Elem, Int)] =
     apply((elem, name, filter) => elems(elem, name, filter))
 
-  implicit def elemNelInstance[F[_]:Monad, CS]: GetFromElem[F, String, NonEmptyList, Elem] =
+  implicit def elemNelInstance[F[_]:Monad, CS]: GetFromElem[F, String, NonEmptyList, (Elem, Int)] =
     apply((elem, name, filter) =>
       flatMapResult(elems(elem, name, filter))(
         l => Result.fromDisjunction(l.toNel.\/>(s"At least one element <$name> expected").point[F], name))
