@@ -8,57 +8,30 @@ import scalaz.{@@, Foldable, NonEmptyList}
 
 import scala.xml.{Attribute, Elem, Null, Text}
 
-private[xml] sealed trait AppendToElem[D, X] {
+private[xml] sealed trait AppendToElem[X] {
 
-  def apply(elem: Elem, x: X, name: D): Elem
+  def apply(elem: ElemValue, x: X, name: String): ElemValue
 
 }
 
 private[xml] object AppendToElem {
 
-  private def apply[D, X](f: (Elem, X, D) => Elem): AppendToElem[D, X] =
-    new AppendToElem[D, X] {
-      override def apply(elem: Elem, x: X, name: D): Elem =
+  private def apply[X](f: (ElemValue, X, String) => ElemValue): AppendToElem[X] =
+    new AppendToElem[X] {
+      override def apply(elem: ElemValue, x: X, name: String): ElemValue =
         f(elem, x, name)
     }
 
-  /* ----- Attributes ----- */
+  implicit def attrInstance: AppendToElem[AttrValue] =
+    apply((e, a, name) => e.copy(attributes = e.attributes + (name -> a.value)))
 
-  implicit def attrInstance: AppendToElem[String, String @@ AttrValue] =
-    apply((e, a, name) => e % Attribute(None, name, Text(a.unwrap), Null))
+  implicit def textValueInstance: AppendToElem[TextValue] =
+    apply((e, a, _) => e.copy(text = Some(a.value)))
 
-  implicit def attrOptionInstance[S]: AppendToElem[String, Option[String @@ AttrValue]] =
-    apply((e, a, name) => a.map(s => e % Attribute(None, name, Text(s.unwrap), Null)).getOrElse(e))
+  implicit def nonEmptyTextValueInstance: AppendToElem[NonEmptyTextValue] =
+    apply((e, a, _) => e.copy(text = Some(a.value)))
 
-  /* ----- Text ----- */
-
-  private def appendText[T](e: Elem)(a: String @@ T) =
-    e.copy(child = e.child :+ Text(a.unwrap))
-
-  implicit def textValueInstance: AppendToElem[Unit, String @@ TextValue] =
-    apply((e, a, _) => appendText(e)(a))
-
-  implicit def nonEmptyTextValueInstance: AppendToElem[Unit, String @@ NonEmptyTextValue] =
-    apply((e, a, _) => appendText(e)(a))
-
-  implicit def optionalNonEmptyTextValueInstance: AppendToElem[Unit, Option[String @@ NonEmptyTextValue]] =
-    apply((e, a, _) => a.map(appendText(e)).getOrElse(e))
-
-  /* ----- Elements ----- */
-
-  implicit def elemInstance: AppendToElem[String, Elem] =
-    apply((e, a, _) => e.copy(child = a +: e.child))
-
-  def elemsInstance[C[_]:Foldable]: AppendToElem[String, C[Elem]] =
-    apply((parent, a, _) => a.foldRight(parent)((e, p) => p.copy(child = e +: p.child)))
-
-  implicit def elemOptionInstance: AppendToElem[String, Option[Elem]] =
-    elemsInstance[Option]
-
-  implicit def elemListInstance: AppendToElem[String, List[Elem]] =
-    elemsInstance[List]
-
-  implicit def elemNelInstance: AppendToElem[String, NonEmptyList[Elem]] =
-    elemsInstance[NonEmptyList]
+  implicit def elemInstance: AppendToElem[ElemValue] =
+    apply((e, a, name) => e.copy(elements = e.elements :+ a.appendTo(<dummy/>.copy(label = name))))
 
 }

@@ -1,4 +1,4 @@
-package ch.srf.xml
+package net.devkat.xml
 
 import scalaz.syntax.all._
 import scalaz.syntax.std.boolean._

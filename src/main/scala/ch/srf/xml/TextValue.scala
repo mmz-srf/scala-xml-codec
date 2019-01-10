@@ -1,3 +1,3 @@
 package ch.srf.xml
 
-private[xml] sealed trait TextValue
+private[xml] final case class TextValue(value: String)

@@ -1,3 +1,3 @@
 package ch.srf.xml
 
-private[xml] sealed trait NonEmptyTextValue
+private[xml] final case class NonEmptyTextValue(value: String)
