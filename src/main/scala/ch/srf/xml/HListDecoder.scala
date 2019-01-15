@@ -21,18 +21,20 @@ private[xml] object HListDecoder {
 
   implicit def hConsDecoder[
   F[_],
-  C[_[_], _, _],
+  C,
+  T[_],
+  X,
   A,
   TS <: HList,
   TA <: HList](implicit
                monadEv: Monad[F],
-               toDecoder: ToXmlDecoder[C],
-               tailDecoder: HListDecoder[F, TS, TA]): HListDecoder[F, C[F, ElemValue, A] :: TS, A :: TA] =
-    new HListDecoder[F, C[F, ElemValue, A] :: TS, A :: TA] {
-      override def apply(dec: C[F, ElemValue, A] :: TS, e: ElemValue): Result[F, A :: TA] = {
+               toDecoder: ToTraverseDecoder[C, F, T, X, A],
+               tailDecoder: HListDecoder[F, TS, TA]): HListDecoder[F, C :: TS, T[A] :: TA] =
+    new HListDecoder[F, C :: TS, T[A] :: TA] {
+      override def apply(dec: C :: TS, e: ElemValue): Result[F, T[A] :: TA] = {
         val hc :: td = dec
         val hd = toDecoder(hc)
-        val a = hd.dec(e)
+        val a = hd.decode(e)
         Apply[Result[F, ?]].apply2(a, tailDecoder(td, e)) { _ :: _ }
       }
     }

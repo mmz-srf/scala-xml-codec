@@ -1,28 +1,49 @@
 package net.devkat.xml
 
-import scalaz.{Monad, NonEmptyList, \/}
+import scalaz.syntax.all._
+import scalaz.{EitherT, Monad}
 
 import scala.xml.Elem
 
-final case class XmlDecoder[F[_], X, A](name: String,
-                                        dec: X => Result[F, A],
-                                        filter: X => Result[F, Boolean]) {
+trait XmlDecoder[F[_], X, A] {
+  outer =>
 
-  def decode(x: X): F[NonEmptyList[String] \/ A] =
-    dec(x).leftAsStrings
+  def dec(x: X): Result[F, A]
 
+  def as[B](implicit dec: Decoder[F, A, B], monadEv: Monad[F]): XmlDecoder[F, X, B] =
+    this ~ dec
+
+  def ~[B](d: Decoder[F, A, B])(implicit monadEv: Monad[F]): XmlDecoder[F, X, B] =
+    new XmlDecoder[F, X, B] {
+      override def dec(x: X): Result[F, B] =
+        outer.dec(x).flatMap(a => EitherT(d.decode(a).map(_.leftMap(e => (List.empty[String], e).wrapNel))))
+    }
+
+  def ensure(e: Ensure[F, A])(implicit monadEv: Monad[F]): XmlDecoder[F, X, A] =
+    this ~ Decoder.ensure(e)
+
+}
+
+trait FromElemDecoder[F[_], X, A] {
+  def dec(e: Elem): Result[F, A]
 }
 
 object XmlDecoder {
 
-  private def nopFilter[F[_]:Monad, A]: A => Result[F, Boolean] =
-    _ => Result.success(true)
+  def attr[F[_]:Monad](name: String) =
+    new XmlDecoder[F, String, String] {
+      override def dec(x: String): Result[F, String] = x.point[Result[F, ?]]
+    }
 
-  def collection[F[_]:Monad, C[_], X, A](dec: XmlDecoder[F, X, A])
-                                        (implicit dfe: DecodeFromElem[F, C, X]): XmlDecoder[F, Elem, C[A]] =
-    XmlDecoder("", dfe(dec.name, dec.dec, dec.filter, _), nopFilter)
+  def optional[F[_]:Monad, X, A](dec: XmlDecoder[F, X, A]) =
+    new XmlDecoder[F, Option[String], Option[A]] {
+      override def dec(x: String): Result[F, String] = x.point[Result[F, ?]]
+    }
 
-  def elem[F[_], C, A]: XmlDecoder[F, C, A] = ???
+  def text[F[_]:Monad](name: String): XmlDecoder[F, String, String] =
+    new XmlDecoder[F, String, String] {
+      override def dec(x: String): Result[F, String] = x.point[Result[F, ?]]
+    }
+
 
 }
-

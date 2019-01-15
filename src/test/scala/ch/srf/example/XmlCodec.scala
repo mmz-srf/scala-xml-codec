@@ -19,19 +19,19 @@ object XmlCodec {
   import dsl.codec._
 
   private val weaponElem =
-    elem1(one("", nonEmptyText)).as[Weapon]
+    elem1("weapon", nonEmptyText).as[Weapon]
 
   private val employeesElem =
-    one("employees",
-      elem1(
-        oneOrMore("employee", elem4(
-          one("name", attr.ensure(nonEmpty)),
-          optional("species", attr.as[Species]),
-          one("rank", elem1(one("", nonEmptyText))),
-          zeroOrMore("weapon", weaponElem)
-            .ensure(check(_.size < 3, w => s"Only 2 weapons allowed, found ${w.size}"))
-        ).as[Employee])
-      )
+    elem1("employees",
+      oneOrMore(elem1("employee",
+        //attr("name").ensure(nonEmpty),
+        optional(attr("species").as[Species]),
+        /*
+        elem1("rank", nonEmptyText),
+        zeroOrMore(weaponElem)
+        */
+          //.ensure(check(_.size < 3, w => s"Only 2 weapons allowed, found ${w.size}"))
+      ).as[Employee])
     )
 
   def decodeEmployees(xml: Elem): NonEmptyList[String] \/ NonEmptyList[Employee] =

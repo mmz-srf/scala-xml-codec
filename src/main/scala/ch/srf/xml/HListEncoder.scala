@@ -1,7 +1,8 @@
 package ch.srf.xml
 
-import scalaz.{Apply, Monad}
+import scalaz.{Apply, Monad, Traverse}
 import scalaz.syntax.applicative._
+import scalaz.syntax.traverse._
 import shapeless.{::, HList, HNil}
 
 private[xml] trait HListEncoder[F[_], C, A] {
@@ -22,18 +23,19 @@ private[xml] object HListEncoder {
 
   implicit def hConsEncoder[
   F[_],
-  C[_[_], _, _],
+  C,
+  T[_]:Traverse,
   X,
   A,
   TS <: HList,
   TA <: HList](implicit
                monadEv: Monad[F],
-               toEncoder: ToXmlEncoder[C],
-               tailEncoder: HListEncoder[F, TS, TA]): HListEncoder[F, C[F, ElemValue, A] :: TS, A :: TA] =
-    new HListEncoder[F, C[F, ElemValue, A] :: TS, A :: TA] {
+               toEncoder: ToTraverseEncoder[C, F, T, X, A],
+               tailEncoder: HListEncoder[F, TS, TA]): HListEncoder[F, C :: TS, T[A] :: TA] =
+    new HListEncoder[F, C :: TS, T[A] :: TA] {
 
-      override def apply(enc: C[F, ElemValue, A] :: TS): Encoder[F, ElemValue, A :: TA] =
-        Encoder[F, ElemValue, A :: TA] { value =>
+      override def apply(enc: C :: TS): Encoder[F, ElemValue, T[A] :: TA] =
+        Encoder[F, ElemValue, T[A] :: TA] { value =>
           val hc :: te = enc
           val ha :: ta = value
           val he = toEncoder(hc)
@@ -43,6 +45,4 @@ private[xml] object HListEncoder {
 
     }
 
-
-  
 }

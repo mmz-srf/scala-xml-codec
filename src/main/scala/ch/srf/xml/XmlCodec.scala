@@ -1,8 +1,9 @@
 package ch.srf.xml
 
 import ch.srf.xml.util.{CompactHList, Flatten}
+import scalaz.syntax.functor._
 import scalaz.Id.Id
-import scalaz.{@@, Monad, NonEmptyList, Traverse, \/}
+import scalaz.{@@, Functor, Monad, NonEmptyList, Traverse, \/}
 
 import scala.xml.Elem
 
@@ -32,21 +33,23 @@ final case class XmlCodec[F[_], X, A](decoder: XmlDecoder[F, X, A],
   def decodeFromParent(e: Elem)
                       (implicit ev: ElemValue =:= X): F[NonEmptyList[String] \/ A] =
     decoder.decodeFromParent(e)
-
-  def encode(a: A)(implicit ev: X =:= ElemValue): F[Elem] =
-    encoder.encode(a).map(e => ev(e).a)
-
+/*
+  def encode(a: A)(implicit
+                   ev: X =:= ElemValue,
+                   functorEv: Functor[F]): F[Elem] =
+    encoder.encode(a).map(e => ev(e))
+*/
 }
 
 object XmlCodec {
 
-  def collection[F[_]:Monad, C[_]:Traverse, X, A](name: String, codec: XmlCodec[F, X, A])
+  def collection[F[_]:Monad, C[_]:Traverse, X, A](codec: XmlCodec[F, X, A])
                                                  (implicit
                                                   dfe: DecodeFromElem[F, C, X],
-                                                  append: AppendToElem[X]): XmlCodec[F, ElemValue, C[A]] =
-    XmlCodec(
-      XmlDecoder.collection[F, C, X, A](name, codec.decoder),
-      XmlEncoder.collection[F, C, X, A](name, codec.encoder)
+                                                  append: AppendToElem[X]): TraverseCodec[F, C, X, A] =
+    TraverseCodec(
+      XmlDecoder.collection[F, C, X, A](codec.decoder),
+      XmlEncoder.collection[F, C, X, A](codec.encoder)
     )
 
   def text[F[_]:Monad]: XmlCodec[F, TextValue, String] =
@@ -55,17 +58,17 @@ object XmlCodec {
   def nonEmptyText[F[_]:Monad]: XmlCodec[F, NonEmptyTextValue, String] =
     XmlCodec(XmlDecoder.nonEmptyText, XmlEncoder.nonEmptyText)
 
-  def attr[F[_]:Monad]: XmlCodec[F, AttrValue, String] =
-    XmlCodec(XmlDecoder.attr, XmlEncoder.attr)
+  def attr[F[_]:Monad](name: String): XmlCodec[F, AttrValue, String] =
+    XmlCodec(XmlDecoder.attr(name), XmlEncoder.attr(name))
 
-  def elem[F[_]:Monad, CS, C, A](children: CS)
+  def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
                                 (implicit
                                  hListDecoder: HListDecoder[F, CS, C],
                                  hListEncoder: HListEncoder[F, CS, C],
                                  compact: CompactHList[C, A]): XmlCodec[F, ElemValue, A] =
     XmlCodec(
-      XmlDecoder.elem(children),
-      XmlEncoder.elem(children)
+      XmlDecoder.elem(name, children),
+      XmlEncoder.elem(name, children)
     )
 
 }

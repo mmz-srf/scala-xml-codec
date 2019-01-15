@@ -1,6 +1,5 @@
 package net.devkat.xml
 
-import net.devkat.xml.util.WrapGen
 import scalaz.Isomorphism.<~~>
 import scalaz.syntax.all._
 import scalaz.syntax.std.option._
@@ -11,7 +10,6 @@ import scala.annotation.implicitNotFound
 @implicitNotFound("No decoder found from ${X} to ${A}")
 final class Decoder[F[_], X, A] private (val decoder: Kleisli[EitherT[F, String, ?], X, A])
   extends AnyVal {
-
   def decode(x: X): F[String \/ A] = decoder.run(x).run
 
   //TODO just an alias for compose. Really needed?
@@ -19,19 +17,8 @@ final class Decoder[F[_], X, A] private (val decoder: Kleisli[EitherT[F, String,
           (implicit monadEv: Monad[F]): Decoder[F, X, B] = this >>> other
 }
 
-trait DecoderLow2 {
-  implicit def generic[F[_]:Monad, X, A](implicit gen: WrapGen[A, X]): Decoder[F, X, A] =
-    Decoder.fromFunction(gen.from)
-}
+object Decoder {
 
-trait DecoderLow extends DecoderLow2 {
-
-  implicit def fromCodec[F[_], X, A](implicit codec: Codec[F, X, A]): Decoder[F, X, A] =
-    codec.decoder
-
-}
-
-object Decoder extends DecoderLow {
   def apply[F[_]:Monad, X, A](f: X => F[String \/ A]): Decoder[F, X, A] =
     new Decoder[F, X, A](Kleisli[EitherT[F, String, ?], X, A](f andThen(EitherT(_))))
 

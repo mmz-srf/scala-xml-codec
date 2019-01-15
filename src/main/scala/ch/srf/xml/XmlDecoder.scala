@@ -4,12 +4,14 @@ import ch.srf.xml.util.{CompactHList, Flatten}
 import scalaz.Id.Id
 import scalaz.std.string.stringInstance
 import scalaz.syntax.all._
+import scalaz.syntax.std.boolean._
 import scalaz.syntax.tag._
 import scalaz.{@@, Monad, NonEmptyList, \/}
 
 import scala.xml.Elem
 
-final case class XmlDecoder[F[_], X, A](dec: X => Result[F, A],
+final case class XmlDecoder[F[_], X, A](name: String,
+                                        dec: X => Result[F, A],
                                         filter: X => Result[F, Boolean]) {
 
   def as[B](implicit dec: Decoder[F, A, B], monadEv: Monad[F]): XmlDecoder[F, X, B] =
@@ -35,8 +37,9 @@ final case class XmlDecoder[F[_], X, A](dec: X => Result[F, A],
   def decodeFromParent(e: Elem)(implicit ev: ElemValue =:= X): F[NonEmptyList[String] \/ A] =
     decFromParent(e).leftAsStrings
 
-  def when(predicate: XmlDecoder[F, X, Boolean]): XmlDecoder[F, X, A] =
+  def when(predicate: XmlDecoder[F, X, Boolean])(implicit monadEv: Monad[F]): XmlDecoder[F, X, A] =
     XmlDecoder[F, X, A](
+      name,
       dec,
       predicate.dec
     )
@@ -48,30 +51,21 @@ object XmlDecoder {
   private def nopFilter[F[_]:Monad, A]: A => Result[F, Boolean] =
     _ => Result.success(true)
 
-  def collection[F[_]:Monad, C[_], X, A](name: String,
-                                         dec: XmlDecoder[F, X, A])
-                                        (implicit dfe: DecodeFromElem[F, C, X]): XmlDecoder[F, ElemValue, C[A]] =
-    XmlDecoder(dfe(name, dec.dec, dec.filter, _), nopFilter)
+  def collection[F[_]:Monad, C[_], X, A](dec: XmlDecoder[F, X, A])
+                                        (implicit dfe: DecodeFromElem[F, C, X]): TraverseDecoder[F, C, X, A] =
+    TraverseDecoder(dec)
 
   def text[F[_]:Monad]: XmlDecoder[F, TextValue, String] =
-    XmlDecoder[F, TextValue, String](
-      x => Result.success(x.value),
-      nopFilter
-    )
+    XmlDecoder("", _.value.point[Result[F, ?]], nopFilter)
 
   def nonEmptyText[F[_]:Monad]: XmlDecoder[F, NonEmptyTextValue, String] =
-    XmlDecoder[F, NonEmptyTextValue, String](
-      x => Result.success(x.value),
-      nopFilter
-    )
+    XmlDecoder("", _.value.point[Result[F, ?]], nopFilter)
 
-  def attr[F[_]: Monad]: XmlDecoder[F, AttrValue, String] =
-    XmlDecoder[F, AttrValue, String](
-      x => Result.success(x.value),
-      nopFilter
-    )
+  def attr[F[_]:Monad](name: String): XmlDecoder[F, AttrValue, String] =
+    XmlDecoder(name, _.value.point[Result[F, ?]], nopFilter)
 
-  def elem[F[_]:Monad, CS, C, A](children: CS)
+  def elem[F[_]:Monad, CS, C, A](name: String,
+                                 children: CS)
                                 (implicit
                                  hListDecoder: HListDecoder[F, CS, C],
                                  compact: CompactHList[C, A]): XmlDecoder[F, ElemValue, A] = {
@@ -91,6 +85,7 @@ object XmlDecoder {
     */
 
     XmlDecoder[F, ElemValue, A](
+      name,
       e => hListDecoder(children, e)
         .monadic
         .map(compact.to)
