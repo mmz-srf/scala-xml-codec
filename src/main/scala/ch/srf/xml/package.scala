@@ -1,7 +1,5 @@
 package ch.srf
 
-import scala.xml.Elem
-
 package object xml {
 
   type Ensure[F[_], A] = A => F[Option[String]]

@@ -1,8 +1,6 @@
 package ch.srf.xml
 
-import scalaz.{Apply, Monad, Traverse}
-import scalaz.syntax.applicative._
-import scalaz.syntax.traverse._
+import scalaz.{Apply, Monad}
 import shapeless.{::, HList, HNil}
 
 private[xml] trait HListEncoder[F[_], C, A] {

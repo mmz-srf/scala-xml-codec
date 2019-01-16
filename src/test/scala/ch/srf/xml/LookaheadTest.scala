@@ -11,7 +11,6 @@ import scalaz.{NonEmptyList, Reader}
 import shapeless.{::, HNil}
 
 import scala.reflect.runtime.universe.{Type, TypeTag, typeOf}
-import scala.xml.Elem
 
 object LookaheadTest extends Specification with NoTypedEqual {
 

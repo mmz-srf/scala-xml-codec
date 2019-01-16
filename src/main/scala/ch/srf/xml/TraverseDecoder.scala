@@ -1,8 +1,8 @@
 package ch.srf.xml
 
 import ch.srf.xml.util.Flatten
-import scalaz.{Applicative, Monad}
 import scalaz.syntax.all._
+import scalaz.{Applicative, Monad}
 
 final case class TraverseDecoder[F[_], T[_], A](decode: ElemValue => Result[F, T[A]]) {
 

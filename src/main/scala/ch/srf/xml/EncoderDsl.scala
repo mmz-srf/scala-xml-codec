@@ -3,8 +3,7 @@ package ch.srf.xml
 import ch.srf.xml.util.CompactHList
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
-import scalaz.Id.Id
-import scalaz.{@@, Monad, NonEmptyList}
+import scalaz.{Monad, NonEmptyList}
 import shapeless.{::, HList, HNil}
 
 class EncoderDsl[F[_]:Monad] extends EnsureOps {
