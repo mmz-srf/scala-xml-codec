@@ -2,13 +2,11 @@ package ch.srf.xml
 
 import java.time.LocalDate
 
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
 import ch.srf.example.XmlCodec._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.DisjunctionMatchers._
 import scalaz.syntax.tag._
-import scalaz.{@@, Id, Monad, NonEmptyList, Tag, \/}
+import scalaz.{@@, Monad, NonEmptyList, Tag, \/}
 import shapeless.HNil
 
 import scala.xml.{Elem, Node, PrettyPrinter}

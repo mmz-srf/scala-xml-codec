@@ -6,12 +6,8 @@ import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import scalaz.Id.Id
 import scalaz.scalacheck.ScalazProperties
-import scalaz.std.anyVal.intInstance
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
-import scalaz.std.string.stringInstance
-import scalaz.std.tuple._
-import scalaz.syntax.nel._
 import scalaz.syntax.traverse._
 import scalaz.{-\/, Applicative, Apply, Equal, Monad, NonEmptyList, \/, \/-}
 
