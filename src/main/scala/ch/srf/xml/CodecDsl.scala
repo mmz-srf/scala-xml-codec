@@ -12,19 +12,19 @@ class CodecDsl[F[_]:Monad] extends EnsureOps {
   def optional[S, X, A](codec: XmlCodec[F, X, A])
                        (implicit
                         dfe: DecodeFromElem[F, Option, X],
-                        append: AppendToElem[X]): TraverseCodec[F, Option, X, A] =
+                        append: AppendToElem[X]): TraverseCodec[F, Option, A] =
     XmlCodec.collection(codec)
 
   def zeroOrMore[S, X, A](codec: XmlCodec[F, X, A])
                          (implicit
                           dfe: DecodeFromElem[F, List, X],
-                          append: AppendToElem[X]): TraverseCodec[F, List, X, A] =
+                          append: AppendToElem[X]): TraverseCodec[F, List, A] =
     XmlCodec.collection(codec)
 
   def oneOrMore[S, X, A](codec: XmlCodec[F, X, A])
                         (implicit
                          dfe: DecodeFromElem[F, NonEmptyList, X],
-                         append: AppendToElem[X]): TraverseCodec[F, NonEmptyList, X, A] =
+                         append: AppendToElem[X]): TraverseCodec[F, NonEmptyList, A] =
     XmlCodec.collection(codec)
 
   def attr(name: String): XmlCodec[F, AttrValue, String] =

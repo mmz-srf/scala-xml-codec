@@ -41,7 +41,7 @@ object XmlCodec {
   def collection[F[_]:Monad, C[_]:Traverse, X, A](codec: XmlCodec[F, X, A])
                                                  (implicit
                                                   dfe: DecodeFromElem[F, C, X],
-                                                  append: AppendToElem[X]): TraverseCodec[F, C, X, A] =
+                                                  append: AppendToElem[X]): TraverseCodec[F, C, A] =
     TraverseCodec(
       XmlDecoder.collection[F, C, X, A](codec.decoder),
       XmlEncoder.collection[F, C, X, A](codec.encoder)

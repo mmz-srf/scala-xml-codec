@@ -9,9 +9,9 @@ private[xml] trait ToTraverseEncoder[C, F[_], T[_], A] {
 
 private[xml] object ToTraverseEncoder {
 
-  implicit def codecInstance[F[_], T[_], X, A]: ToTraverseEncoder[TraverseCodec[F, T, X, A], F, T, A] =
-    new ToTraverseEncoder[TraverseCodec[F, T, X, A], F, T, A] {
-      override def apply(c: TraverseCodec[F, T, X, A]): TraverseEncoder[F, T, A] =
+  implicit def codecInstance[F[_], T[_], A]: ToTraverseEncoder[TraverseCodec[F, T, A], F, T, A] =
+    new ToTraverseEncoder[TraverseCodec[F, T, A], F, T, A] {
+      override def apply(c: TraverseCodec[F, T, A]): TraverseEncoder[F, T, A] =
         c.encoder
     }
 

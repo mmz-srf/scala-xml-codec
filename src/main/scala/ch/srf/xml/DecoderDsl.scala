@@ -8,16 +8,15 @@ import shapeless.{::, HList, HNil}
 class DecoderDsl[F[_]:Monad] extends EnsureOps {
 
   def optional[S, X, A](decoder: XmlDecoder[F, X, A])
-                       (implicit dfe: DecodeFromElem[F, Option, X]): TraverseDecoder[F, Option, X, A] =
+                       (implicit dfe: DecodeFromElem[F, Option, X]): TraverseDecoder[F, Option, A] =
     XmlDecoder.collection(decoder)
 
   def zeroOrMore[S, X, A](decoder: XmlDecoder[F, X, A])
-                         (implicit dfe: DecodeFromElem[F, List, X]): TraverseDecoder[F, List, X, A] =
+                         (implicit dfe: DecodeFromElem[F, List, X]): TraverseDecoder[F, List, A] =
     XmlDecoder.collection(decoder)
 
   def oneOrMore[S, X, A](decoder: XmlDecoder[F, X, A])
-                        (implicit dfe: DecodeFromElem[F, NonEmptyList, X])
-  : TraverseDecoder[F, NonEmptyList, X, A] =
+                        (implicit dfe: DecodeFromElem[F, NonEmptyList, X]): TraverseDecoder[F, NonEmptyList, A] =
     XmlDecoder.collection(decoder)
 
   def attr(name: String): XmlDecoder[F, AttrValue, String] =

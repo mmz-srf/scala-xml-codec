@@ -23,12 +23,11 @@ private[xml] object HListDecoder {
   F[_],
   C,
   T[_],
-  X,
   A,
   TS <: HList,
   TA <: HList](implicit
                monadEv: Monad[F],
-               toDecoder: ToTraverseDecoder[C, F, T, X, A],
+               toDecoder: ToTraverseDecoder[C, F, T, A],
                tailDecoder: HListDecoder[F, TS, TA]): HListDecoder[F, C :: TS, T[A] :: TA] =
     new HListDecoder[F, C :: TS, T[A] :: TA] {
       override def apply(dec: C :: TS, e: ElemValue): Result[F, T[A] :: TA] = {

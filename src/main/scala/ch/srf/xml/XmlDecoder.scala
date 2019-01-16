@@ -45,7 +45,7 @@ object XmlDecoder {
     _ => Result.success(true)
 
   def collection[F[_], C[_], X, A](dec: XmlDecoder[F, X, A])
-                                  (implicit dfe: DecodeFromElem[F, C, X]): TraverseDecoder[F, C, X, A] =
+                                  (implicit dfe: DecodeFromElem[F, C, X]): TraverseDecoder[F, C, A] =
     TraverseDecoder.fromDecoder(dec)
 
   def text[F[_]:Monad]: XmlDecoder[F, TextValue, String] =
