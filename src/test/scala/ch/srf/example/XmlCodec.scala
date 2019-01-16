@@ -23,14 +23,12 @@ object XmlCodec {
 
   private val employeesElem =
     elem1("employees",
-      oneOrMore(elem1("employee",
-        //attr("name").ensure(nonEmpty),
+      oneOrMore(elem4("employee",
+        attr("name").ensure(nonEmpty),
         optional(attr("species").as[Species]),
-        /*
         elem1("rank", nonEmptyText),
         zeroOrMore(weaponElem)
-        */
-          //.ensure(check(_.size < 3, w => s"Only 2 weapons allowed, found ${w.size}"))
+          .ensure(check(_.size < 3, w => s"Only 2 weapons allowed, found ${w.size}"))
       ).as[Employee])
     )
 

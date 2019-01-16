@@ -1,9 +1,7 @@
 package ch.srf.xml
 
-import ch.srf.xml.util.{CompactHList, Flatten}
-import scalaz.syntax.functor._
-import scalaz.Id.Id
-import scalaz.{@@, Functor, Monad, NonEmptyList, Traverse, \/}
+import ch.srf.xml.util.CompactHList
+import scalaz.{Functor, Monad, NonEmptyList, Traverse, \/}
 
 import scala.xml.Elem
 
@@ -23,9 +21,6 @@ final case class XmlCodec[F[_], X, A](decoder: XmlDecoder[F, X, A],
             (implicit monadEv: Monad[F]): XmlCodec[F, X, A] =
     new XmlCodec(decoder.ensure(e), encoder)
 
-  def skip[B](implicit ev: Flatten[A, B], monadEv: Monad[F]): XmlCodec[F, X, B] =
-    new XmlCodec(decoder.skip, encoder.skip)
-
   def decode(e: Elem)
             (implicit ev: ElemValue =:= X): F[NonEmptyList[String] \/ A] =
     decoder.decode(e)
@@ -33,12 +28,12 @@ final case class XmlCodec[F[_], X, A](decoder: XmlDecoder[F, X, A],
   def decodeFromParent(e: Elem)
                       (implicit ev: ElemValue =:= X): F[NonEmptyList[String] \/ A] =
     decoder.decodeFromParent(e)
-/*
+
   def encode(a: A)(implicit
                    ev: X =:= ElemValue,
                    functorEv: Functor[F]): F[Elem] =
-    encoder.encode(a).map(e => ev(e))
-*/
+    encoder.encode(a)
+
 }
 
 object XmlCodec {

@@ -30,13 +30,8 @@ trait FromElemDecoder[F[_], X, A] {
 
 object XmlDecoder {
 
-  def attr[F[_]:Monad](name: String) =
+  def attr[F[_]:Monad](name: String): XmlDecoder[F, String, String] =
     new XmlDecoder[F, String, String] {
-      override def dec(x: String): Result[F, String] = x.point[Result[F, ?]]
-    }
-
-  def optional[F[_]:Monad, X, A](dec: XmlDecoder[F, X, A]) =
-    new XmlDecoder[F, Option[String], Option[A]] {
       override def dec(x: String): Result[F, String] = x.point[Result[F, ?]]
     }
 

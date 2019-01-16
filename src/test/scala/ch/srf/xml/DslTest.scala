@@ -2,11 +2,13 @@ package ch.srf.xml
 
 import java.time.LocalDate
 
+import scalaz.std.list.listInstance
+import scalaz.std.option.optionInstance
 import ch.srf.example.XmlCodec._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.DisjunctionMatchers._
 import scalaz.syntax.tag._
-import scalaz.{@@, Monad, NonEmptyList, Tag, \/}
+import scalaz.{@@, Id, Monad, NonEmptyList, Tag, \/}
 import shapeless.HNil
 
 import scala.xml.{Elem, Node, PrettyPrinter}
@@ -61,8 +63,8 @@ object DslTest extends Specification {
         </employees>
 
       decodeEmployees(xml) should be_-\/(NonEmptyList(
-        "employees/employee[1]/@name: Attribute 'name' missing",
-        "employees/employee[2]/rank: Exactly one element <rank> expected, found 2",
+        "employees/employee[1]: Attribute 'name' missing",
+        "employees/employee[2]: Exactly one element <rank> expected, found 2",
         "employees/employee[3]/@name: String must not be empty",
         "employees/employee[4]/rank/<text>: Text must not be empty"
       ))
@@ -103,7 +105,7 @@ object DslTest extends Specification {
         </employees>
 
       decodeEmployees(xml) should be_-\/(NonEmptyList(
-        "employees/employee[2]/weapon: Only 2 weapons allowed, found 3"
+        "employees/employee[2]: Only 2 weapons allowed, found 3"
       ))
 
     }

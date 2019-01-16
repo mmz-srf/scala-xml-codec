@@ -1,6 +1,6 @@
 package ch.srf.xml
 
-import ch.srf.xml.Result.Monadic
+import ch.srf.xml.Result.{Errors, Monadic}
 import org.scalacheck.Arbitrary
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
@@ -23,7 +23,7 @@ object ResultTest extends Specification with ScalaCheck {
     result.value.map(_.leftMap(_.map(_._2)))
 
   private def error(msg: String): Result[F, String] =
-    Result.error[F, String](Path(("error", Option.empty[Int]).wrapNel), msg)
+    Result.error[F, String](msg)
 
   "The Applicative instance" should {
 
@@ -68,6 +68,7 @@ object ResultTest extends Specification with ScalaCheck {
       implicit val applicativeInstance: Applicative[Result[Id, ?]] = Result.applicativeInstance[Id]
       implicit val arb: Arbitrary[Result[Id, Int]] = Gens.resultArb[Id, Int]
       implicit val functionArb: Arbitrary[Result[Id, Int => Int]] = Gens.resultArb[Id, Int => Int]
+      implicit val eeq: scalaz.Equal[Id[Errors \/ Int]] = Equal.equalA
       implicit val eq: Equal[Result[Id, Int]] = Result.equalInstance[Id, Int]
 
       ScalazProperties.applicative.laws[Result[Id, ?]]
@@ -83,6 +84,7 @@ object ResultTest extends Specification with ScalaCheck {
       implicit val monadInstance: Monad[Monadic[Id, ?]] = Monadic.monadInstance[Id]
       implicit val arb: Arbitrary[Monadic[Id, Int]] = Gens.monadicResultArb[Id, Int]
       implicit val functionArb: Arbitrary[Monadic[Id, Int => Int]] = Gens.monadicResultArb[Id, Int => Int]
+      implicit val eeq: scalaz.Equal[Id[Errors \/ Int]] = Equal.equalA
       implicit val eq: Equal[Monadic[Id, Int]] = Monadic.equalInstance[Id, Int]
 
       ScalazProperties.monad.laws[Monadic[Id, ?]]

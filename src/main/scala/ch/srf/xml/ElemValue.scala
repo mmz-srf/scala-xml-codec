@@ -8,12 +8,14 @@ private[xml] final case class ElemValue(attributes: Map[String, String],
                                         elements: List[Elem],
                                         text: Option[String]) {
 
-  def appendTo(elem: Elem): Elem =
-    elements.foldLeft(
-      attributes.foldLeft(
+  def toElem(name: String): Elem = {
+    val elem = <dummy/>.copy(label = name)
+    elements.foldRight(
+      attributes.foldRight(
         text.map(t => elem.copy(child = elem.child :+ Text(t))).getOrElse(elem)
-      ) { case (parent, (name, value)) => parent % Attribute(None, name, Text(value), Null) }
-    ) { case (parent, e) => e.copy(child = parent +: e.child) }
+      ) { case ((n, value), parent) => parent % Attribute(None, n, Text(value), Null) }
+    ) { case (e, parent) => parent.copy(child = e +: parent.child) }
+  }
 
   def append(other: ElemValue): ElemValue =
     ElemValue(

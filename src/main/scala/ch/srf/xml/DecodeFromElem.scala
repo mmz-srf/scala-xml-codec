@@ -4,6 +4,7 @@ import ch.srf.xml.scalazext.syntax._
 import scalaz.Id.Id
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
+import scalaz.std.string.stringInstance
 import scalaz.syntax.all._
 import scalaz.syntax.std.boolean._
 import scalaz.syntax.std.list._
@@ -35,6 +36,7 @@ private[xml] object DecodeFromElem {
       .monadic
       .flatMap(_.traverse(decode).monadic)
       .applicative
+      .prependPath("@" + name)
 
   implicit def attrInstance[F[_]:Monad]: DecodeFromElem[F, Id, AttrValue] =
     new DecodeFromElem[F, Id, AttrValue] {
@@ -44,7 +46,9 @@ private[xml] object DecodeFromElem {
                             e: ElemValue): Result[F, A] =
         flatMapResult(getAttribute(name, decode, filter, e))(
           o => Result.fromDisjunction(o.\/>(s"Attribute '$name' missing").point[F]))
+
     }
+
 
   implicit def attrOptionInstance[F[_]:Monad]: DecodeFromElem[F, Option, AttrValue] =
     new DecodeFromElem[F, Option, AttrValue] {
@@ -74,6 +78,7 @@ private[xml] object DecodeFromElem {
                             e: ElemValue): Result[F, A] =
         flatMapResult(nonEmptyTextValue(decode, filter, e))(
           o => Result.fromDisjunction(o.\/>("Text must not be empty").point[F]))
+          .prependPath("<text>")
     }
 
   implicit def textInstance[F[_]:Monad]: DecodeFromElem[F, Id, TextValue] =
@@ -83,13 +88,13 @@ private[xml] object DecodeFromElem {
                             filter: TextValue => Result[F, Boolean],
                             e: ElemValue): Result[F, A] =
         flatMapResult(
-          e.text
-            .map(TextValue.apply)
+          Some(TextValue(e.text.getOrElse("")))
             .filterM(filter)
             .monadic
             .flatMap(_.traverse(decode).monadic)
             .applicative
         )(o => Result.fromDisjunction(o.\/>("No matching text found").point[F]))
+          .prependPath("<text>")
     }
 
   implicit def nonEmptyTextOptionInstance[F[_]:Monad]: DecodeFromElem[F, Option, NonEmptyTextValue] =
@@ -120,11 +125,13 @@ private[xml] object DecodeFromElem {
                                    filter: ElemValue => Result[F, Boolean],
                                    parent: ElemValue): Result[F, List[A]] = {
 
-    val elems = parent.elements.map(ElemValue.fromElem)
+    val elems = parent.elements
+      .filter(_.label === name)
+      .map(ElemValue.fromElem)
 
     (elems.size > 1)
       .fold(
-        elems.zipWithIndex.map { case (e, pos) => (e, Some(pos)) },
+        elems.zipWithIndex.map { case (e, pos) => (e, Some(pos + 1)) },
         elems.map(e => (e, None))
       )
       .filterM { case (e, _) => filter(e) }

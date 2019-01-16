@@ -1,6 +1,6 @@
 package ch.srf.xml
 
-import ch.srf.xml.util.{CompactHList, Flatten}
+import ch.srf.xml.util.CompactHList
 import scalaz.syntax.all._
 import scalaz.{Applicative, Functor, Monad, Traverse}
 
@@ -18,23 +18,19 @@ final case class XmlEncoder[F[_], X, A](name: String,
           (implicit monadEv: Monad[F]): XmlEncoder[F, X, B] =
     XmlEncoder[F, X, B](name, (Encoder(enc) ~ e).encode)
 
-  def skip[B](implicit
-              ev: Flatten[A, B],
-              monadEv: Monad[F]): XmlEncoder[F, X, B] =
-    this ~ Encoder.fromFunction(ev.from)
-
   def encode(a: A)(implicit
                    ev: X =:= ElemValue,
                    functorEv: Functor[F]): F[Elem] =
-    enc(a).map(ev(_).appendTo(<dummy/>.copy(label = name)))
+    enc(a).map(ev(_).toElem(name))
 
 }
 
 object XmlEncoder {
 
   def collection[F[_]:Applicative, T[_]:Traverse, X, A](encoder: XmlEncoder[F, X, A])
-                                                       (implicit append: AppendToElem[X]): TraverseEncoder[F, T, X, A] =
-    TraverseEncoder[F, T, X, A](encoder)
+                                                       (implicit append: AppendToElem[X]): TraverseEncoder[F, T, A] =
+
+    TraverseEncoder.fromEncoder(encoder)
 
   def text[F[_]:Monad]: XmlEncoder[F, TextValue, String] =
     XmlEncoder("", TextValue(_).point[F])
@@ -53,7 +49,7 @@ object XmlEncoder {
     def compactEncoder: Encoder[F, C, A] =
       Encoder.fromFunction[F, C, A](compact.from)
 
-    new XmlEncoder[F, ElemValue, A](name, (hListEncoder.apply(children) ~ compactEncoder).encode)
+    new XmlEncoder[F, ElemValue, A](name, (hListEncoder(children) ~ compactEncoder).encode)
 
   }
 

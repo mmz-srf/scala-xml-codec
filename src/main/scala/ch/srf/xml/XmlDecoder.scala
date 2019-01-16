@@ -1,12 +1,8 @@
 package ch.srf.xml
 
-import ch.srf.xml.util.{CompactHList, Flatten}
-import scalaz.Id.Id
-import scalaz.std.string.stringInstance
+import ch.srf.xml.util.CompactHList
 import scalaz.syntax.all._
-import scalaz.syntax.std.boolean._
-import scalaz.syntax.tag._
-import scalaz.{@@, Monad, NonEmptyList, \/}
+import scalaz.{Monad, NonEmptyList, \/}
 
 import scala.xml.Elem
 
@@ -18,18 +14,15 @@ final case class XmlDecoder[F[_], X, A](name: String,
     this ~ dec
 
   def ~[B](d: Decoder[F, A, B])(implicit monadEv: Monad[F]): XmlDecoder[F, X, B] =
-    this.copy(
-      dec = x => dec(x).monadic.flatMap(a => Result.fromDisjunction(d.decode(a)).monadic).applicative,
+    copy(
+      dec = x => dec(x).monadic.flatMap(a => Result.fromDisjunction(d.decode(a)).monadic).applicative
     )
 
   def ensure(e: Ensure[F, A])(implicit monadEv: Monad[F]): XmlDecoder[F, X, A] =
     this ~ Decoder.ensure(e)
 
-  def skip[B](implicit flattenEv: Flatten[A, B], monadEv: Monad[F]): XmlDecoder[F, X, B] =
-    this ~ Decoder.fromFunction(flattenEv.to)
-
   def decode(e: Elem)(implicit ev: ElemValue =:= X): F[NonEmptyList[String] \/ A] =
-    dec(ev(ElemValue.fromElem(e))).leftAsStrings
+    dec(ev(ElemValue.fromElem(e))).prependPath(name).leftAsStrings
 
   private[xml] def decFromParent(e: Elem)(implicit ev: ElemValue =:= X): Result[F, A] =
     dec(ev(ElemValue.fromElem(e)))
@@ -51,9 +44,9 @@ object XmlDecoder {
   private def nopFilter[F[_]:Monad, A]: A => Result[F, Boolean] =
     _ => Result.success(true)
 
-  def collection[F[_]:Monad, C[_], X, A](dec: XmlDecoder[F, X, A])
-                                        (implicit dfe: DecodeFromElem[F, C, X]): TraverseDecoder[F, C, X, A] =
-    TraverseDecoder(dec)
+  def collection[F[_], C[_], X, A](dec: XmlDecoder[F, X, A])
+                                  (implicit dfe: DecodeFromElem[F, C, X]): TraverseDecoder[F, C, X, A] =
+    TraverseDecoder.fromDecoder(dec)
 
   def text[F[_]:Monad]: XmlDecoder[F, TextValue, String] =
     XmlDecoder("", _.value.point[Result[F, ?]], nopFilter)

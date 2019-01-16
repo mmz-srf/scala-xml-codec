@@ -11,17 +11,17 @@ class EncoderDsl[F[_]:Monad] extends EnsureOps {
 
   def optional[S, X, A](encoder: XmlEncoder[F, X, A])
                        (implicit
-                        append: AppendToElem[X]): TraverseEncoder[F, Option, X, A] =
+                        append: AppendToElem[X]): TraverseEncoder[F, Option, A] =
     XmlEncoder.collection(encoder)
 
   def zeroOrMore[S, X, A](encoder: XmlEncoder[F, X, A])
                          (implicit
-                          append: AppendToElem[X]): TraverseEncoder[F, List, X, A] =
+                          append: AppendToElem[X]): TraverseEncoder[F, List, A] =
     XmlEncoder.collection(encoder)
 
   def oneOrMore[S, X, A](encoder: XmlEncoder[F, X, A])
                         (implicit
-                         append: AppendToElem[X]): TraverseEncoder[F, NonEmptyList, X, A] =
+                         append: AppendToElem[X]): TraverseEncoder[F, NonEmptyList, A] =
     XmlEncoder.collection(encoder)
 
   def attr(name: String): XmlEncoder[F, AttrValue, String] =

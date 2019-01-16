@@ -24,13 +24,12 @@ private[xml] object HListEncoder {
   implicit def hConsEncoder[
   F[_],
   C,
-  T[_]:Traverse,
-  X,
+  T[_],
   A,
   TS <: HList,
   TA <: HList](implicit
                monadEv: Monad[F],
-               toEncoder: ToTraverseEncoder[C, F, T, X, A],
+               toEncoder: ToTraverseEncoder[C, F, T, A],
                tailEncoder: HListEncoder[F, TS, TA]): HListEncoder[F, C :: TS, T[A] :: TA] =
     new HListEncoder[F, C :: TS, T[A] :: TA] {
 

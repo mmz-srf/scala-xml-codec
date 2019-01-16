@@ -24,7 +24,7 @@ private[xml] object Result {
 
   private[xml] type Errors = NonEmptyList[(List[String], String)]
 
-  private def mapErrors[A, B, F[_] : Functor](value: F[Result.Errors \/ A])
+  private def mapErrors[A, B, F[_] : Functor](value: F[Errors \/ A])
                                              (f: (List[String], String) => B): F[NonEmptyList[B] \/ A] =
     value.map(_.leftMap(_.map(f.tupled)))
 

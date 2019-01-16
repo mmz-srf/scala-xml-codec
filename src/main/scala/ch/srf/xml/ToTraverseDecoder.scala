@@ -23,15 +23,15 @@ private[xml] object ToTraverseDecoder {
   implicit def xmlDecoderInstance[F[_], X, A](implicit dfe: DecodeFromElem[F, Id, X])
   : ToTraverseDecoder[XmlDecoder[F, X, A], F, Id, X, A] =
     new ToTraverseDecoder[XmlDecoder[F, X, A], F, Id, X, A] {
-      override def apply(c: XmlDecoder[F, X, A]): TraverseDecoder[F, Id, X, A] =
-        TraverseDecoder(c)
+      override def apply(d: XmlDecoder[F, X, A]): TraverseDecoder[F, Id, X, A] =
+        TraverseDecoder.fromDecoder(d)
     }
 
   implicit def xmlCodecInstance[F[_], X, A](implicit dfe: DecodeFromElem[F, Id, X])
   : ToTraverseDecoder[XmlCodec[F, X, A], F, Id, X, A] =
     new ToTraverseDecoder[XmlCodec[F, X, A], F, Id, X, A] {
       override def apply(c: XmlCodec[F, X, A]): TraverseDecoder[F, Id, X, A] =
-        TraverseDecoder(c.decoder)
+        TraverseDecoder.fromDecoder(c.decoder)
     }
 
 }

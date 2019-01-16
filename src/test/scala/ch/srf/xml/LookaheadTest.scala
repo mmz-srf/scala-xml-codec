@@ -26,7 +26,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
 
     final case class FooBarBaz(foo: Foo, bar: Option[Bar], baz: List[Baz], qux: NonEmptyList[Qux])
 
-    def discriminator(attrName: String): XmlDecoder[Id, String, Elem, Boolean] =
+    def discriminator(attrName: String): ElemDecoder[Id, Boolean] =
       elem1("elem", optional(attr(attrName))) ~ Decoder.fromFunction(_.isDefined)
 
     type R[A] = Result[Id, A]
@@ -67,7 +67,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
         <elems>
           <elem qux="qux 1" value="a"/>
         </elems>
-      elem.decode(xml) should be_-\/(NonEmptyList("elems/elem: Exactly one element <elem> expected, found 0"))
+      elem.decode(xml) should be_-\/(NonEmptyList("elems: Exactly one element <elem> expected, found 0"))
     }
 
     "correctly report decoding errors for cardinality Option" in {
@@ -78,7 +78,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
           <elem bar="bar 2"/>
           <elem qux="qux 1" value="a"/>
         </elems>
-      elem.decode(xml) should be_-\/(NonEmptyList("elems/elem: At most one element <elem> expected, found 2"))
+      elem.decode(xml) should be_-\/(NonEmptyList("elems: At most one element <elem> expected, found 2"))
     }
 
     "correctly report decoding errors for cardinality NonEmptyList" in {
@@ -86,7 +86,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
         <elems>
           <elem foo="foo"/>
         </elems>
-      elem.decode(xml) should be_-\/(NonEmptyList("elems/elem: At least one element <elem> expected"))
+      elem.decode(xml) should be_-\/(NonEmptyList("elems: At least one element <elem> expected"))
     }
 
     "emit the correct position for decoding errors" in {
@@ -97,7 +97,7 @@ object LookaheadTest extends Specification with NoTypedEqual {
           <elem baz="baz"/>
           <elem qux="qux 1"/>
         </elems>
-      elem.decode(xml) should be_-\/(NonEmptyList("elems/elem[4]/value: Attribute 'value' missing"))
+      elem.decode(xml) should be_-\/(NonEmptyList("elems/elem[4]: Attribute 'value' missing"))
     }
 
   }

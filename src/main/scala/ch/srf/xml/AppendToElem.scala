@@ -1,13 +1,5 @@
 package ch.srf.xml
 
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
-import scalaz.syntax.foldable._
-import scalaz.syntax.tag._
-import scalaz.{@@, Foldable, NonEmptyList}
-
-import scala.xml.{Attribute, Elem, Null, Text}
-
 private[xml] sealed trait AppendToElem[X] {
 
   def apply(x: X, name: String): ElemValue
@@ -32,6 +24,6 @@ private[xml] object AppendToElem {
     apply((a, _) => ElemValue.empty.copy(text = Some(a.value)))
 
   implicit def elemInstance: AppendToElem[ElemValue] =
-    apply((a, name) => ElemValue.empty.copy(elements = a.appendTo(<dummy/>.copy(label = name)) :: Nil))
+    apply((a, name) => ElemValue.empty.copy(elements = a.toElem(name) :: Nil))
 
 }
