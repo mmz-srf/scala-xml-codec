@@ -16,7 +16,7 @@ val testDependencies = Seq(
 
 libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.3.2",
-  "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+  "org.scala-lang.modules" %% "scala-xml" % "1.1.1",
   "org.scalaz" %% "scalaz-core" % "7.2.26"
 ) ++ testDependencies
 
