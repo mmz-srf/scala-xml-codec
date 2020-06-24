@@ -103,5 +103,10 @@ class DecoderDsl[F[_]:Monad] extends EnsureOps {
                                                                      compact: CompactHList[C, A]): ElemDecoder[F, A] =
     elem[C1 :: C2 :: C3 :: C4 :: C5 :: C6 :: C7 :: C8 :: C9 :: C10 :: C11 :: C12 :: HNil, C, A](name, c1 :: c2 :: c3 :: c4 :: c5 :: c6 :: c7 :: c8 :: c9 :: c10 :: c11 :: c12 :: HNil)
 
+  def elem13[C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12, C13, C, A](name: String, c1: C1, c2: C2, c3: C3, c4: C4, c5: C5, c6: C6, c7: C7, c8: C8, c9: C9, c10: C10, c11: C11, c12: C12, c13: C13)
+                                                                     (implicit
+                                                                      dec: HListDecoder[F, C1 :: C2 :: C3 :: C4 :: C5 :: C6 :: C7 :: C8 :: C9 :: C10 :: C11 :: C12 :: C13 :: HNil, C],
+                                                                      compact: CompactHList[C, A]): ElemDecoder[F, A] =
+    elem[C1 :: C2 :: C3 :: C4 :: C5 :: C6 :: C7 :: C8 :: C9 :: C10 :: C11 :: C12 :: C13 :: HNil, C, A](name, c1 :: c2 :: c3 :: c4 :: c5 :: c6 :: c7 :: c8 :: c9 :: c10 :: c11 :: c12 :: c13 :: HNil)
 
 }
