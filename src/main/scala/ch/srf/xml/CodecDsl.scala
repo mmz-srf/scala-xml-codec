@@ -31,7 +31,7 @@ class CodecDsl[F[_]:Monad] extends EnsureOps {
                                       dec: HListDecoder[F, SC, C],
                                       enc: HListEncoder[F, SC, C],
                                       compact: CompactHList[C, A]): ElemCodec[F, A] =
-    XmlCodec.elem(name, children)
+    XmlCodec.elemCompact(name, children)
 
   def elem1[C1, C, A](name: String, c1: C1)
                      (implicit

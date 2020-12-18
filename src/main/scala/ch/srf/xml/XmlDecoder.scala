@@ -79,7 +79,7 @@ object XmlDecoder {
   def nonEmptyText[F[_]:Monad]: XmlDecoder[F, Unit, String @@ NonEmptyTextValue, String] =
     textDecoder[F, NonEmptyTextValue]
 
-  def attr[F[_]:Monad](name: String): XmlDecoder[F, String, String @@ AttrValue, String] =
+  def attr[F[_]:Monad](name: String): AttrDecoder[F, String] =
     new XmlDecoder[F, String, String @@ AttrValue, String] {
 
       override def dec(x: String @@ AttrValue): Result[F, String] =
@@ -90,10 +90,15 @@ object XmlDecoder {
 
     }
 
-  def elem[F[_]:Monad, CS, C, A](name: String, children: CS)
-                                (implicit
-                                 hListDecoder: HListDecoder[F, CS, C],
-                                 compact: CompactHList[C, A]): XmlDecoder[F, String, Elem, A] =
+  def elemCompact[F[_]:Monad, CS, C, A](name: String, children: CS)
+                                       (implicit
+                                        hListDecoder: HListDecoder[F, CS, C],
+                                        compact: CompactHList[C, A]): ElemDecoder[F, A] =
+    elem(name, children) ~ Decoder.fromFunction(compact.to)
+
+  def elem[F[_]:Monad, CS, A](name: String, children: CS)
+                                   (implicit
+                                    hListDecoder: HListDecoder[F, CS, A]): XmlDecoder[F, String, Elem, A] =
     new XmlDecoder[F, String, Elem, A] {
 
       private def checkName: Decoder[F, Elem, Elem] =
@@ -107,9 +112,7 @@ object XmlDecoder {
           .fromDisjunction(checkName.decode(e), descriptor.name)
           .monadic
           .flatMap(_ => hListDecoder(children, e).prependPath(descriptor.name, None).monadic)
-          .map(compact.to)
           .applicative
 
     }
-
 }
