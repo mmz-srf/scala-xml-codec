@@ -47,10 +47,10 @@ private[xml] object AppendToElem {
   /* ----- Elements ----- */
 
   implicit def elemInstance: AppendToElem[String, Elem] =
-    apply((e, a, _) => e.copy(child = e.child :+ a))
+    apply((e, a, _) => e.copy(child = a +: e.child))
 
   def elemsInstance[Cy[_]:Foldable]: AppendToElem[String, Cy[Elem]] =
-    apply((parent, a, _) => a.foldLeft(parent)((p, e) => p.copy(child = p.child :+ e)))
+    apply((parent, a, _) => a.foldRight(parent)((e, p) => p.copy(child = e +: p.child)))
 
   implicit def elemOptionInstance: AppendToElem[String, Option[Elem]] =
     elemsInstance[Option]

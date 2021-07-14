@@ -22,6 +22,8 @@ object DslTest extends Specification {
       </employee>
       <employee name="Detritus" species="troll">
         <rank>Sergeant</rank>
+        <weapon>Piecemaker</weapon>
+        <weapon>Hands</weapon>
       </employee>
     </employees>
 
