@@ -59,7 +59,7 @@ object DslTest extends Specification {
           </employee>
         </employees>
 
-      decodeEmployees(xml).toEither should beRight(NonEmptyList(
+      decodeEmployees(xml).toEither should beLeft(NonEmptyList(
         "employees/employee[1]/@name: Attribute 'name' missing",
         "employees/employee[2]/rank: Exactly one element <rank> expected, found 2",
         "employees/employee[3]/@name: String must not be empty",
