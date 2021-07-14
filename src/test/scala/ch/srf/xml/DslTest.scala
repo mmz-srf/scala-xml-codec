@@ -4,7 +4,6 @@ import java.time.LocalDate
 
 import ch.srf.example.XmlCodec._
 import org.specs2.mutable.Specification
-import org.specs2.scalaz.DisjunctionMatchers._
 import scalaz.syntax.tag._
 import scalaz.{@@, Monad, NonEmptyList, Tag, \/}
 import shapeless.HNil
@@ -33,7 +32,7 @@ object DslTest extends Specification {
 
     "successfully decode a correct XML" in {
 
-      decodeEmployees(validXml) should be_\/-
+      decodeEmployees(validXml).toEither should beRight
 
     }
 
@@ -60,7 +59,7 @@ object DslTest extends Specification {
           </employee>
         </employees>
 
-      decodeEmployees(xml) should be_-\/(NonEmptyList(
+      decodeEmployees(xml).toEither should beRight(NonEmptyList(
         "employees/employee[1]/@name: Attribute 'name' missing",
         "employees/employee[2]/rank: Exactly one element <rank> expected, found 2",
         "employees/employee[3]/@name: String must not be empty",
@@ -81,7 +80,7 @@ object DslTest extends Specification {
           </employee>
         </employees>
 
-      decodeEmployees(xml) should be_-\/(NonEmptyList(
+      decodeEmployees(xml).toEither should beLeft(NonEmptyList(
         "employees/employee[2]/@species: Species 'unidentified' not found"
       ))
 
@@ -102,7 +101,7 @@ object DslTest extends Specification {
           </employee>
         </employees>
 
-      decodeEmployees(xml) should be_-\/(NonEmptyList(
+      decodeEmployees(xml).toEither should beLeft(NonEmptyList(
         "employees/employee[2]/weapon: Only 2 weapons allowed, found 3"
       ))
 
@@ -128,7 +127,7 @@ object DslTest extends Specification {
       val xml = <foo date={today.unwrap.toString}/>
 
       val decodeResult = e.decode(xml)
-      decodeResult must be_\/-(today)
+      decodeResult.toEither must beRight(today)
 
       val encodeResult: Elem = e.encode(today)
       encodeResult must_=== xml
@@ -138,7 +137,7 @@ object DslTest extends Specification {
     "support appending decoders" in {
       import Dsl.simple.decode._
       val s = elem1("x", text ~ Decoder.fromFunction(_.length))
-      s.decode(<x>xxx</x>) must be_\/-(3)
+      s.decode(<x>xxx</x>).toEither must beRight(3)
     }
 
     "support appending encoders" in {
@@ -150,7 +149,7 @@ object DslTest extends Specification {
     "support appending codecs" in {
       import Dsl.simple.codec._
       val s = elem1("x", text ~ Codec.fromFunctions(_.length, "x" * (_: Int)))
-      s.decode(<x>xxx</x>) must be_\/-(3)
+      s.decode(<x>xxx</x>).toEither must beRight(3)
       s.encode(3) must_=== <x>xxx</x>
     }
 
@@ -175,7 +174,7 @@ object DslTest extends Specification {
 
       val result: NonEmptyList[String] \/ Foo = fooElem.decode(<foo></foo>)
 
-      result must be_-\/
+      result.toEither must beLeft
     }
 
     "support mandatory, optional and potentially empty text nodes" in {
@@ -196,7 +195,7 @@ object DslTest extends Specification {
         </foo>
 
       val invalidResult = e.decode(invalidXml)
-      invalidResult must be_-\/(NonEmptyList("foo/mandatory/<text>: Text must not be empty"))
+      invalidResult.toEither must beLeft(NonEmptyList("foo/mandatory/<text>: Text must not be empty"))
 
       val validXml =
         <foo>
@@ -206,7 +205,7 @@ object DslTest extends Specification {
         </foo>
 
       val validResult = e.decode(validXml)
-      validResult must be_\/-("Hello" :: None :: "" :: HNil)
+      validResult.toEither must beRight("Hello" :: None :: "" :: HNil)
 
     }
 
@@ -216,7 +215,7 @@ object DslTest extends Specification {
 
       val result = decodeEmployees(validXml).map(encodeEmployees)
 
-      result.map(pretty) must be_\/-(pretty(validXml))
+      result.map(pretty).toEither must beRight(pretty(validXml))
     }
 
     "support skipping elements" in {
@@ -245,7 +244,7 @@ object DslTest extends Specification {
           </baz>
         </parent>
 
-      e.decode(xml) must be_\/-(None :: List("bar 1", "bar 2") :: NonEmptyList("baz 1", "baz 2") :: HNil)
+      e.decode(xml).toEither must beRight(None :: List("bar 1", "bar 2") :: NonEmptyList("baz 1", "baz 2") :: HNil)
     }
 
   }

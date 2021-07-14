@@ -35,7 +35,7 @@ private[xml] object HListDecoder {
         val x = getFromElem(e, hd.descriptor.identifier)
         val xResult = Result.fromDisjunction[F, X](x.point[F], hd.descriptor.name)
         val a = xResult.monadic.flatMap(hd.dec(_).monadic).applicative
-        Apply[Result[F, ?]].apply2(a, tailDecoder(td, e)) { _ :: _ }
+        Apply[Result[F, *]].apply2(a, tailDecoder(td, e)) { _ :: _ }
       }
     }
 

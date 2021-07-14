@@ -27,7 +27,7 @@ object XmlCodec {
         attr("name").ensure(nonEmpty),
         optional(attr("species").as[Species]),
         elem1("rank", nonEmptyText),
-        zeroOrMore(weaponElem).ensure(check(_.size < 3, w => s"Only 2 weapons allowed, found ${w.size}"))
+        zeroOrMore(weaponElem).ensure(check(_.size < 3, w => s"Only 2 weapons allowed, found ${w.size.toString}"))
       ).as[Employee])
     )
 

@@ -2,8 +2,8 @@ package ch.srf.xml
 
 import ch.srf.xml.Encoder.fromFunction
 import ch.srf.xml.util.WrapGen
-import scalaz.{Contravariant, Monad}
 import scalaz.syntax.all._
+import scalaz.{Contravariant, Monad}
 
 import scala.annotation.implicitNotFound
 
@@ -49,8 +49,8 @@ object Encoder extends EncoderLow {
   def id[F[_]: Monad, A]: Encoder[F, A, A] =
     fromFunction(identity)
 
-  implicit def contravariantInstance[F[_]:Monad, X]: Contravariant[Encoder[F, X, ?]] =
-    new Contravariant[Encoder[F, X, ?]] {
+  implicit def contravariantInstance[F[_]:Monad, X]: Contravariant[Encoder[F, X, *]] =
+    new Contravariant[Encoder[F, X, *]] {
       override def contramap[A, B](e: Encoder[F, X, A])(f: B => A): Encoder[F, X, B] =
         new Encoder[F, X, B] {
           override def encode(b: B): F[X] =
