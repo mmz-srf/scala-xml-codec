@@ -30,7 +30,7 @@ private[xml] object Result {
     value.map(_.leftMap(_.map(f.tupled)))
 
   def success[F[_]:Applicative, A](value: A): Result[F, A] =
-    value.point[Result[F, ?]]
+    value.point[Result[F, *]]
 
   def error[F[_]:Applicative, A](path: Path, msg: String): Result[F, A] =
     Result((path, msg).wrapNel.left[A].point[F])
@@ -38,14 +38,14 @@ private[xml] object Result {
   def fromDisjunction[F[_]:Applicative, A](d: F[String \/ A], name: String): Result[F, A] =
     Result(d.map(_.leftMap(e => (Path((name, Option.empty[Int]).wrapNel), e).wrapNel)))
 
-  implicit def applicativeInstance[F[_]:Applicative]: Applicative[Result[F, ?]] =
-    new Applicative[Result[F, ?]] {
+  implicit def applicativeInstance[F[_]:Applicative]: Applicative[Result[F, *]] =
+    new Applicative[Result[F, *]] {
       private lazy val C = Applicative[F]
-        .compose[Result.Errors \/ ?]
+        .compose[Result.Errors \/ *]
 
       override def ap[A, B](fa: => Result[F, A])(f: => Result[F, A => B]): Result[F, B] = {
         lazy val C2 = Applicative[F]
-          .compose[scalaz.Validation[Result.Errors, ?]]
+          .compose[scalaz.Validation[Result.Errors, *]]
 
         Result(
           C2
@@ -73,14 +73,14 @@ private[xml] object Result {
 
   object Monadic {
 
-    implicit def monadInstance[F[_]:Monad]: Monad[Monadic[F, ?]] =
-      new Monad[Monadic[F, ?]] {
+    implicit def monadInstance[F[_]:Monad]: Monad[Monadic[F, *]] =
+      new Monad[Monadic[F, *]] {
 
         override def bind[A, B](fa: Monadic[F, A])(f: A => Monadic[F, B]): Monadic[F, B] =
           Monadic(EitherT(fa.value).flatMapF(f(_).value).run)
 
         override def point[A](a: => A): Monadic[F, A] =
-          a.point[Result[F, ?]].monadic
+          a.point[Result[F, *]].monadic
 
       }
 
@@ -88,13 +88,13 @@ private[xml] object Result {
       ev contramap (_.value)
   }
 
-  def applicativeToMonadic[F[_]:Applicative]: Result[F, ?] ~> Monadic[F, ?] =
-    new (Result[F, ?] ~> Monadic[F, ?]) {
+  def applicativeToMonadic[F[_]]: Result[F, *] ~> Monadic[F, *] =
+    new (Result[F, *] ~> Monadic[F, *]) {
       override def apply[A](fa: Result[F, A]): Monadic[F, A] = fa.monadic
     }
 
-  def monadicToApplicative[F[_]:Applicative]: Monadic[F, ?] ~> Result[F, ?] =
-    new (Monadic[F, ?] ~> Result[F, ?]) {
+  def monadicToApplicative[F[_]]: Monadic[F, *] ~> Result[F, *] =
+    new (Monadic[F, *] ~> Result[F, *]) {
       override def apply[A](fa: Monadic[F, A]): Result[F, A] = fa.applicative
     }
 

@@ -1,7 +1,6 @@
 package ch.srf.xml
 
 import ch.srf.xml.util.{CompactHList, Flatten}
-import ch.srf.xml.util.{CompactHList, Flatten}
 import scalaz.{@@, Monad, NonEmptyList, Traverse, \/}
 
 import scala.xml.Elem

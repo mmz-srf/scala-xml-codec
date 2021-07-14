@@ -55,14 +55,14 @@ private[xml] object GetFromElem {
   implicit lazy val elemInstance: GetFromElem[String, Elem] =
     apply((elem, name) => elems(elem, name) match {
       case h :: Nil => h.right
-      case l => s"Exactly one element <$name> expected, found ${l.size}".left
+      case l => s"Exactly one element <$name> expected, found ${l.size.toString}".left
     })
 
   implicit def elemOptionInstance[CS]: GetFromElem[String, Option[Elem]] =
     apply((elem, name) => elems(elem, name) match {
       case Nil => None.right
       case List(h) => Some(h).right
-      case l => s"At most one element <$name> expected, found ${l.size}".left
+      case l => s"At most one element <$name> expected, found ${l.size.toString}".left
     })
 
   implicit def elemListInstance[CS]: GetFromElem[String, List[Elem]] =

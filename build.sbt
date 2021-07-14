@@ -1,6 +1,10 @@
-scalaVersion := "2.12.7"
+scalaVersion := "2.13.6"
 
-crossScalaVersions := Seq("2.11.12", scalaVersion.value)
+scalacOptions --= List("-Xlint:inaccessible")
+
+ThisBuild / versionScheme := Some("early-semver")
+
+crossScalaVersions := Seq("2.12.14", scalaVersion.value)
 
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
@@ -9,27 +13,19 @@ organization := "ch.srf"
 name := "scala-xml-codec"
 
 val testDependencies = Seq(
-  "org.typelevel" %% "scalaz-specs2" % "0.5.2",
-  "org.specs2" %% "specs2-scalacheck" % "4.0.2",
-  "org.scalaz" %% "scalaz-scalacheck-binding" % "7.2.26-scalacheck-1.13"
+  "org.specs2" %% "specs2-scalacheck" % "4.12.3",
+  "org.scalaz" %% "scalaz-scalacheck-binding" % "7.2.31-scalacheck-1.14"
 ).map(_ % "test")
 
 libraryDependencies ++= Seq(
-  "com.chuusai" %% "shapeless" % "2.3.2",
-  "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
-  "org.scalaz" %% "scalaz-core" % "7.2.26"
-) ++ testDependencies
-
-scalacOptions ++= Seq(
-  "-Ypartial-unification",
-  "-language:higherKinds"
-)
-
-addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8")
+  "com.chuusai" %% "shapeless" % "2.3.3",
+  "org.scala-lang.modules" %% "scala-xml" % "2.0.0",
+  "org.scalaz" %% "scalaz-core" % "7.2.31"
+) ++ testDependencies ++ List(compilerPlugin("org.typelevel" % ("kind-projector_" + scalaVersion.value) % "0.13.0"))
 
 wartremoverErrors ++= Warts.allBut(Wart.Any, Wart.Nothing, Wart.NonUnitStatements)
 
-wartremoverErrors in test -= Wart.NonUnitStatements
+Test / wartremoverErrors -= Wart.NonUnitStatements
 
 /* --------------------------------------------------------------------------------
  * Release

@@ -1,7 +1,5 @@
 package ch.srf
 
-import scalaz.NonEmptyList
-
 import scala.xml.Elem
 
 package object xml {

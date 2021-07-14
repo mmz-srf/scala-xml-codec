@@ -13,8 +13,9 @@ abstract class EnsureOps {
   def nonEmpty[F[_]:Applicative]: Ensure[F, String] =
     check(!_.isEmpty, _ => "String must not be empty")
 
+  @SuppressWarnings(Array("org.wartremover.warts.ToString"))
   def mustEqual[F[_]:Applicative, A](a: A)(implicit ev: Equal[A]): Ensure[F, A] =
-    check(_ === a, a => s"Value must equal '$a'")
+    check(_ === a, a => s"Value must equal '${a.toString}'")
 
 }
 

@@ -1,7 +1,6 @@
 package ch.srf.xml
 
 import org.specs2.mutable.Specification
-import org.specs2.scalaz.DisjunctionMatchers._
 import scalaz.std.list.listMonoid
 import scalaz.syntax.either._
 import scalaz.{NonEmptyList, ReaderWriterState}
@@ -42,13 +41,13 @@ object ReaderWriterStateTest extends Specification {
     "successfully decode valid XML" in {
       val xml = <outer id="a"><inner id="a"></inner></outer>
       val (_, result, _) = elem.decode(xml).run((), None)
-      result should be_\/-
+      result.toEither should beRight
     }
 
     "correctly report an error for invalid XML" in {
       val xml = <outer id="a"><inner id="b"></inner></outer>
       val (_, result, _) = elem.decode(xml).run((), None)
-      result should be_-\/(NonEmptyList("outer/inner/@id: Inner ID b =/= outer ID a"))
+      result.toEither should beLeft(NonEmptyList("outer/inner/@id: Inner ID b =/= outer ID a"))
     }
 
   }
