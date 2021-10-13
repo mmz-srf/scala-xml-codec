@@ -4,8 +4,6 @@ scalacOptions --= List("-Xlint:inaccessible")
 
 ThisBuild / versionScheme := Some("early-semver")
 
-crossScalaVersions := Seq("2.12.14", scalaVersion.value)
-
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
 organization := "ch.srf"
