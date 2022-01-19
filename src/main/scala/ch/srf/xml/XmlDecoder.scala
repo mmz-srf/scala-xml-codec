@@ -7,6 +7,7 @@ import scalaz.syntax.tag._
 import scalaz.{@@, Monad, NonEmptyList, \/}
 
 import scala.xml.Elem
+import scalaz.Semigroup
 
 sealed abstract class XmlDecoder[F[_]:Monad, D, X, A] {
   outer =>
@@ -111,5 +112,18 @@ object XmlDecoder {
           .applicative
 
     }
+
+  def or[F[_] : Monad, D : Semigroup, X, A](one: XmlDecoder[F,D,X,A],two: XmlDecoder[F,D,X,A], descriptorSeparator: D): XmlDecoder[F,D,X,A] = new XmlDecoder[F,D,X,A]{
+    override def dec(x: X): Result[F,A] = Result(
+        one.dec(x).value.flatMap(
+        _.fold(
+          errors => two.dec(x).value.map( _.leftMap( errors |+| _ )) ,
+          _.pure[\/[Result.Errors, *]].pure[F]
+        )
+      )
+    )
+
+    override def descriptor: Descriptor[D] = Descriptor.or(one.descriptor,two.descriptor,descriptorSeparator)
+  }
 
 }
