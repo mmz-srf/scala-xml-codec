@@ -117,7 +117,7 @@ object XmlDecoder {
     override def dec(x: X): Result[F,A] = Result(
         one.dec(x).value.flatMap(
         _.fold(
-          errors => two.dec(x).value.map( _.leftMap( errors |+| _ )) ,
+          errors => { println("dec was CALLED") ; two.dec(x).value.map( _.leftMap( errors |+| _ )) },
           _.pure[\/[Result.Errors, *]].pure[F]
         )
       )
