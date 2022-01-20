@@ -117,9 +117,9 @@ object XmlDecoder {
 
   def or[F[_] : Monad, D : Semigroup, X, A](one: XmlDecoder[F,D,X,A],two: XmlDecoder[F,D,X,A], descriptorSeparator: D): XmlDecoder[F,D,X,A] = new XmlDecoder[F,D,X,A]{
     override def dec(x: X): Result[F,A] = Result(
-        one.dec(x).value.flatMap(
+      one.dec(x).value.flatMap(
         _.fold(
-          errors => {println("CALLED DEC"); two.dec(x).value.map( _.leftMap( errors |+| _ ))},
+          errors => two.dec(x).value.map( _.leftMap( errors |+| _ )),
           _.pure[\/[Result.Errors, *]].pure[F]
         )
       )
@@ -130,7 +130,7 @@ object XmlDecoder {
     @SuppressWarnings(Array("org.wartremover.warts.ImplicitParameter"))
     override def decodeFromParent(e: Elem)(implicit ev: GetFromElem[D,X]): F[NonEmptyList[String] \/ A] = one.decodeFromParent(e).flatMap(
       _.fold(
-        errors => { println("CALLED PARENT DEC, DAMN");two.decodeFromParent(e).map(_.leftMap( errors |+| _))},
+        errors => two.decodeFromParent(e).map(_.leftMap( errors |+| _)),
         _.pure[\/[NonEmptyList[String], *]].pure[F]
       )
     )
