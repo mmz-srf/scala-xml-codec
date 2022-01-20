@@ -43,6 +43,8 @@ sealed abstract class XmlDecoder[F[_]:Monad, D, X, A] {
     Result.fromDisjunction(decoder.decode(e), descriptor.name).monadic.flatMap(dec(_).monadic).applicative.leftAsStrings
   }
 
+  def getFromElem(e: Elem)(implicit ev: GetFromElem[D, X]): String \/ X =
+    ev(e, descriptor.identifier)
 }
 
 object XmlDecoder {
@@ -132,6 +134,10 @@ object XmlDecoder {
         _.pure[\/[NonEmptyList[String], *]].pure[F]
       )
     )
+
+    @SuppressWarnings(Array("org.wartremover.warts.ImplicitParameter"))
+    override def getFromElem(e: Elem)(implicit ev: GetFromElem[D,X]): String \/ X =
+      one.getFromElem(e).orElse(two.getFromElem(e))
   }
 
 }
