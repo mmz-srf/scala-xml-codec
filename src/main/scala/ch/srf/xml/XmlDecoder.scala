@@ -117,13 +117,21 @@ object XmlDecoder {
     override def dec(x: X): Result[F,A] = Result(
         one.dec(x).value.flatMap(
         _.fold(
-          errors => { println("dec was CALLED") ; two.dec(x).value.map( _.leftMap( errors |+| _ )) },
+          errors => {println("CALLED DEC"); two.dec(x).value.map( _.leftMap( errors |+| _ ))},
           _.pure[\/[Result.Errors, *]].pure[F]
         )
       )
     )
 
     override def descriptor: Descriptor[D] = Descriptor.or(one.descriptor,two.descriptor,descriptorSeparator)
+
+    @SuppressWarnings(Array("org.wartremover.warts.ImplicitParameter"))
+    override def decodeFromParent(e: Elem)(implicit ev: GetFromElem[D,X]): F[NonEmptyList[String] \/ A] = one.decodeFromParent(e).flatMap(
+      _.fold(
+        errors => { println("CALLED PARENT DEC, DAMN");two.decodeFromParent(e).map(_.leftMap( errors |+| _))},
+        _.pure[\/[NonEmptyList[String], *]].pure[F]
+      )
+    )
   }
 
 }
