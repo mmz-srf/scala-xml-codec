@@ -7,6 +7,7 @@ import scalaz.syntax.tag._
 import scalaz.{@@, Monad, NonEmptyList, \/}
 
 import scala.xml.Elem
+import scalaz.Semigroup
 
 sealed abstract class XmlDecoder[F[_]:Monad, D, X, A] {
   outer =>
@@ -42,6 +43,8 @@ sealed abstract class XmlDecoder[F[_]:Monad, D, X, A] {
     Result.fromDisjunction(decoder.decode(e), descriptor.name).monadic.flatMap(dec(_).monadic).applicative.leftAsStrings
   }
 
+  def getFromElem(e: Elem)(implicit ev: GetFromElem[D, X]): String \/ X =
+    ev(e, descriptor.identifier)
 }
 
 object XmlDecoder {
@@ -111,5 +114,30 @@ object XmlDecoder {
           .applicative
 
     }
+
+  def or[F[_] : Monad, D : Semigroup, X, A](one: XmlDecoder[F,D,X,A],two: XmlDecoder[F,D,X,A], descriptorSeparator: D): XmlDecoder[F,D,X,A] = new XmlDecoder[F,D,X,A]{
+    override def dec(x: X): Result[F,A] = Result(
+      one.dec(x).value.flatMap(
+        _.fold(
+          errors => two.dec(x).value.map( _.leftMap( errors |+| _ )),
+          _.pure[\/[Result.Errors, *]].pure[F]
+        )
+      )
+    )
+
+    override def descriptor: Descriptor[D] = Descriptor.or(one.descriptor,two.descriptor,descriptorSeparator)
+
+    @SuppressWarnings(Array("org.wartremover.warts.ImplicitParameter"))
+    override def decodeFromParent(e: Elem)(implicit ev: GetFromElem[D,X]): F[NonEmptyList[String] \/ A] = one.decodeFromParent(e).flatMap(
+      _.fold(
+        errors => two.decodeFromParent(e).map(_.leftMap( errors |+| _)),
+        _.pure[\/[NonEmptyList[String], *]].pure[F]
+      )
+    )
+
+    @SuppressWarnings(Array("org.wartremover.warts.ImplicitParameter"))
+    override def getFromElem(e: Elem)(implicit ev: GetFromElem[D,X]): String \/ X =
+      one.getFromElem(e).orElse(two.getFromElem(e))
+  }
 
 }
