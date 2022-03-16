@@ -1,9 +1,8 @@
 package ch.srf.xml
 
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
-import scalaz.syntax.traverse._
-import scalaz.{NonEmptyList, Traverse, Applicative}
+import cats.data.NonEmptyList
+import cats.syntax.all._
+import cats.{Traverse, Applicative}
 
 private[xml] sealed trait CardinalityDecoder[F[_], Cy[_], X, A] {
 
@@ -33,9 +32,10 @@ private[xml] object CardinalityDecoder {
 
   private def decodeTraverse[
   F[_]: Applicative,
-  G[_]: Traverse, X, A](dec: X => Result[F, A],
-                        xs: G[X]): Result[F, G[A]] = {
-    val pairs = xs.indexed.map { case (pos, x) => (x, pos + 1) }
+  G[_]: Traverse, X, A
+  ](dec: X => Result[F, A],
+    xs: G[X]): Result[F, G[A]] = {
+    val pairs = xs.zipWithIndex.map { case (x, pos) => (x, pos + 1) }
     pairs.traverse { case (e, pos) => dec(e).updatePos(pos) }
   }
 

@@ -1,3 +1,3 @@
 package ch.srf.xml
 
-private[xml] sealed trait AttrValue
+private[xml] final case class AttrValue(unwrap: String) extends AnyVal

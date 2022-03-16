@@ -18,7 +18,8 @@ val testDependencies = Seq(
 libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.3.3",
   "org.scala-lang.modules" %% "scala-xml" % "2.0.0",
-  "org.scalaz" %% "scalaz-core" % "7.2.31"
+  "org.scalaz" %% "scalaz-core" % "7.2.31",
+  "org.typelevel" %% "cats-core" % "2.6.1"
 ) ++ testDependencies ++ List(compilerPlugin("org.typelevel" % ("kind-projector_" + scalaVersion.value) % "0.13.0"))
 
 wartremoverErrors ++= Warts.allBut(Wart.Any, Wart.Nothing, Wart.NonUnitStatements)

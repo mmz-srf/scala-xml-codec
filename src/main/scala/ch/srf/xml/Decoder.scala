@@ -1,17 +1,17 @@
 package ch.srf.xml
 
+import cats.arrow.Compose
+import cats.data.EitherT
+import cats.data.Kleisli
+import cats.syntax.all._
+import cats.{Monad, Contravariant}
 import ch.srf.xml.util.WrapGen
-import scalaz.Isomorphism.<~~>
-import scalaz.syntax.all._
-import scalaz.syntax.std.option._
-import scalaz.{Monad, \/, Contravariant, EitherT, Kleisli, Compose, ~~>}
-
 import scala.annotation.implicitNotFound
 
 @implicitNotFound("No decoder found from ${X} to ${A}")
 final class Decoder[F[_], X, A] private (val decoder: Kleisli[EitherT[F, String, *], X, A])
   extends AnyVal {
-  def decode(x: X): F[String \/ A] = decoder.run(x).run
+  def decode(x: X): F[String Either A] = decoder.run(x).value
 
   //TODO just an alias for compose. Really needed?
   def ~[B](other: Decoder[F, A, B])
@@ -31,49 +31,50 @@ trait DecoderLow extends DecoderLow2 {
 }
 
 object Decoder extends DecoderLow {
-  def apply[F[_], X, A](f: X => F[String \/ A]): Decoder[F, X, A] =
+  def apply[F[_], X, A](f: X => F[String Either A]): Decoder[F, X, A] =
     new Decoder[F, X, A](Kleisli[EitherT[F, String, *], X, A](f andThen(EitherT(_))))
 
-  def fromDisjunction[F[_]:Monad, X, A](f: X => String \/ A): Decoder[F, X, A] =
-    apply(a => f(a).point[F])
+  def fromEither[F[_]:Monad, X, A](f: X => String Either A): Decoder[F, X, A] =
+    apply(a => f(a).pure[F])
 
   def fromFunction[F[_]:Monad, X, A](f: X => A): Decoder[F, X, A] =
-    apply(f andThen(_.pure[String \/ *].pure[F]))
+    apply(f andThen(_.pure[String Either *].pure[F]))
 
   def fromTryCatchNonFatal[F[_]:Monad, X, A](f: X => A): Decoder[F, X, A] =
-    apply(a => \/.fromTryCatchNonFatal(f(a)).leftMap(_.getMessage).point[F])
+    apply(a => Either.catchNonFatal(f(a)).leftMap(_.getMessage).pure[F])
 
   def ensure[F[_]:Monad, A](e: Ensure[F, A]): Decoder[F, A, A] =
-    apply(a => e(a).map(_.<\/(a)))
+    apply(a => e(a).map(_.toLeft(a)))
 
   def id[F[_]: Monad, E, I]: Decoder[F, I, I] =
     fromFunction(identity)
 
-  def decoder2ToKleisli[F[_]]: Decoder[F, *, *] ~~> Kleisli[EitherT[F, String, *], *, *] =
-    new (Decoder[F, *, *] ~~> Kleisli[EitherT[F, String, *], *, *]) {
-      def apply[A, B](x: Decoder[F, A, B]) = x.decoder
-    }
-  def kleisliToDecoder[F[_]]: Kleisli[EitherT[F, String, *], *, *] ~~> Decoder[F, *, *] =
-    new (Kleisli[EitherT[F, String, *], *, *] ~~> Decoder[F, *, *]) {
-      def apply[A, B](x: Kleisli[EitherT[F, String, *], A, B]) = new Decoder(x)
-    }
+  def decoder2ToKleisli[F[_], X, A](dec: Decoder[F, X, A]): Kleisli[EitherT[F, String, *], X, A] =
+    dec.decoder
 
-  def decoder2KleisliIsoBifunctor[F[_]]: Decoder[F, *, *] <~~> Kleisli[EitherT[F, String, *], *, *] =
-    new (Decoder[F, *, *] <~~> Kleisli[EitherT[F, String, *], *, *]) {
-      lazy val from = kleisliToDecoder[F]
-      lazy val to = decoder2ToKleisli[F]
-    }
+  def kleisliToDecoder[F[_], X, A](x: Kleisli[EitherT[F, String, *], X, A]): Decoder[F, X, A] =
+    new Decoder(x)
 
-  //TODO we could provide all instances of Kleisli this way
+  implicit def decoder2ComposeInstance[F[_] : Monad]: Compose[Decoder[F, *, *]] = new Compose[Decoder[F, *, *]] {
+    override def compose[A, B, C](f: Decoder[F,B,C], g: Decoder[F,A,B]): Decoder[F,A,C] =
+      kleisliToDecoder(decoder2ToKleisli(f).compose(decoder2ToKleisli(g)))
+  }
 
-  implicit def decoder2ComposeInstance[F[_] : Monad]: Compose[Decoder[F, *, *]] =
-    Compose.fromIso(decoder2KleisliIsoBifunctor[F])
+  implicit def decoder2Monad[F[_] : Monad, A]: Monad[Decoder[F, A, *]] = new Monad[Decoder[F, A, *]] {
+    override def flatMap[B, C](fa: Decoder[F,A,B])(f: B => Decoder[F,A,C]): Decoder[F,A,C] =
+      kleisliToDecoder(decoder2ToKleisli(fa).flatMap(f.andThen(decoder2ToKleisli)))
 
-  implicit def decoder2Monad[F[_] : Monad, A]: Monad[Decoder[F, A, *]] =
-    Monad.fromIso(decoder2KleisliIsoBifunctor[F].unlift1)
+    override def tailRecM[B, C](a: B)(f: B => Decoder[F,A,Either[B,C]]): Decoder[F,A,C] =
+      kleisliToDecoder(Monad[Kleisli[EitherT[F, String, *], A, *]].tailRecM(a)(f.andThen(decoder2ToKleisli)))
 
-  implicit def decoder2Contravariant[F[_], A]: Contravariant[Decoder[F, *, A]] =
-    Contravariant.fromIso[Decoder[F, *, A], Kleisli[EitherT[F, String, *], *, A]](
-      decoder2KleisliIsoBifunctor[F].unlift2[A]
-    )
+    override def pure[B](x: B): Decoder[F,A,B] =
+      kleisliToDecoder(x.pure[Kleisli[EitherT[F, String, *], A, *]])
+
+  }
+
+  implicit def decoder2Contravariant[F[_], A]: Contravariant[Decoder[F, *, A]] = new Contravariant[Decoder[F, *, A]] {
+    override def contramap[B, C](fa: Decoder[F,B,A])(f: C => B): Decoder[F,C,A] =
+      kleisliToDecoder(decoder2ToKleisli(fa).local(f))
+  }
+
 }

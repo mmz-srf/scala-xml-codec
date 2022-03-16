@@ -1,9 +1,8 @@
 package ch.srf.xml
 
+import cats.data.NonEmptyList
+import cats.Monad
 import ch.srf.xml.util.CompactHList
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
-import scalaz.{@@, Monad, NonEmptyList}
 import shapeless.{::, HList, HNil}
 
 class CodecDsl[F[_]:Monad] extends EnsureOps {
@@ -17,13 +16,13 @@ class CodecDsl[F[_]:Monad] extends EnsureOps {
   def oneOrMore[S, D, X, A](codec: XmlCodec[F, D, X, A]): XmlCodec[F, D, NonEmptyList[X], NonEmptyList[A]] =
     XmlCodec.collection[F, NonEmptyList, D, X, A](codec, CardinalityDecoder.nel)
 
-  def attr(name: String): XmlCodec[F, String, String @@ AttrValue, String] =
+  def attr(name: String): XmlCodec[F, String, AttrValue, String] =
     XmlCodec.attr(name)
 
-  def text: XmlCodec[F, Unit, String @@ TextValue, String] =
+  def text: XmlCodec[F, Unit, TextValue, String] =
     XmlCodec.text
 
-  def nonEmptyText: XmlCodec[F, Unit, String @@ NonEmptyTextValue, String] =
+  def nonEmptyText: XmlCodec[F, Unit, NonEmptyTextValue, String] =
     XmlCodec.nonEmptyText
 
   private def elem[SC <: HList, C, A](name: String, children: SC)

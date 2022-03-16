@@ -1,7 +1,7 @@
 package ch.srf.xml
 
-import scalaz.Id.Id
-import scalaz.Monad
+import cats.Id
+import cats.Monad
 
 class Dsl[F[_]:Monad] {
 

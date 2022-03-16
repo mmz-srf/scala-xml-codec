@@ -1,11 +1,9 @@
 package ch.srf.xml
 
-import scalaz.syntax.applicative._
-import scalaz.syntax.bind._
-import scalaz.{Apply, Monad}
-import shapeless.{::, HList, HNil}
-
+import cats.Monad
+import cats.syntax.all._
 import scala.xml.Elem
+import shapeless.{::, HList, HNil}
 
 private[xml] trait HListDecoder[F[_], C, A] {
 
@@ -33,9 +31,9 @@ private[xml] object HListDecoder {
         val hc :: td = dec
         val hd = toDecoder(hc)
         val x = hd.getFromElem(e)
-        val xResult = Result.fromDisjunction[F, X](x.point[F], hd.descriptor.name)
+        val xResult = Result.fromEither[F, X](x.pure[F], hd.descriptor.name)
         val a = xResult.monadic.flatMap(hd.dec(_).monadic).applicative
-        Apply[Result[F, *]].apply2(a, tailDecoder(td, e)) { _ :: _ }
+        (a, tailDecoder(td, e)).mapN(_ :: _)
       }
     }
 
