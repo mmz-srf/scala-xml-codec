@@ -1,14 +1,13 @@
 package ch.srf.xml
 
+import cats.{Monad}
 import ch.srf.xml.util.WrapGen
-import scalaz.{Monad, \/}
-
 import scala.annotation.implicitNotFound
 
 @implicitNotFound("No codec found from ${X} to ${A}")
 final class Codec[F[_], X, A](val decoder: Decoder[F, X, A], val encoder: Encoder[F, X, A]) {
 
-  def decode(x: X): F[String \/ A] =
+  def decode(x: X): F[String Either A] =
     decoder.decode(x)
 
   def encode(a: A): F[X] =

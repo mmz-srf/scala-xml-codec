@@ -5,3 +5,6 @@ project/target/
 target/
 .idea/
 .bsp/
+.bloop
+metals.sbt
+.metals

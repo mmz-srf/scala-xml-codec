@@ -1,17 +1,16 @@
 package ch.srf.example
 
+import cats.data.NonEmptyList
+import cats.data.Reader
 import ch.srf.example.Domain._
 import ch.srf.xml.{Codec, Decoder, Dsl, Encoder}
-import scalaz.syntax.std.option._
-import scalaz.{NonEmptyList, Reader, \/}
-
 import scala.xml.Elem
 
 object XmlCodec {
 
   private implicit val speciesCodec: Codec[SpeciesDirectoryReader, String, Species] =
     Codec.from(
-      Decoder(speciesId => Reader(_.get(speciesId).\/>(s"Species '$speciesId' not found"))),
+      Decoder(speciesId => Reader(_.get(speciesId).toRight(s"Species '$speciesId' not found"))),
       Encoder(species => Reader(_.collectFirst { case (name, `species`) => name }.getOrElse("programming error")))
     )
 
@@ -31,7 +30,7 @@ object XmlCodec {
       ).as[Employee])
     )
 
-  def decodeEmployees(xml: Elem): NonEmptyList[String] \/ NonEmptyList[Employee] =
+  def decodeEmployees(xml: Elem): NonEmptyList[String] Either NonEmptyList[Employee] =
     employeesElem
       .decode(xml)
       .run(speciesDirectory)

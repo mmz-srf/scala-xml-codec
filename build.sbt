@@ -12,13 +12,14 @@ name := "scala-xml-codec"
 
 val testDependencies = Seq(
   "org.specs2" %% "specs2-scalacheck" % "4.12.3",
-  "org.scalaz" %% "scalaz-scalacheck-binding" % "7.2.31-scalacheck-1.14"
+  "io.chrisdavenport" %% "cats-scalacheck" % "0.2.0",
+  "org.typelevel" %% "cats-laws" % "2.6.1",
 ).map(_ % "test")
 
 libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.3.3",
   "org.scala-lang.modules" %% "scala-xml" % "2.0.0",
-  "org.scalaz" %% "scalaz-core" % "7.2.31"
+  "org.typelevel" %% "cats-core" % "2.6.1"
 ) ++ testDependencies ++ List(compilerPlugin("org.typelevel" % ("kind-projector_" + scalaVersion.value) % "0.13.0"))
 
 wartremoverErrors ++= Warts.allBut(Wart.Any, Wart.Nothing, Wart.NonUnitStatements)

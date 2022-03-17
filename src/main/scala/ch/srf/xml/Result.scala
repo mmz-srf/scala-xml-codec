@@ -1,9 +1,12 @@
 package ch.srf.xml
 
-import scalaz.syntax.all._
-import scalaz.{Applicative, EitherT, Equal, Monad, NonEmptyList, \/, ~>, Functor}
+import cats.data.EitherT
+import cats.data.Nested
+import cats.data.NonEmptyList
+import cats.syntax.all._
+import cats.{Applicative, Eq, Monad, ~>, Functor}
 
-private[xml] final case class Result[F[_]:Applicative, A](value: F[Result.Errors \/ A]) {
+private[xml] final case class Result[F[_]:Applicative, A](value: F[Result.Errors Either A]) {
   import Result._
 
   def prependPath(name: String, pos: Option[Int]): Result[F, A] =
@@ -12,13 +15,13 @@ private[xml] final case class Result[F[_]:Applicative, A](value: F[Result.Errors
   def updatePos(pos: Int): Result[F, A] =
     Result(mapErrors((path, msg) => (path.updatePos(pos), msg)))
 
-  def leftAsStrings: F[NonEmptyList[String] \/ A] =
-    mapErrors((path, msg) => path.shows + ": " + msg)
+  def leftAsStrings: F[NonEmptyList[String] Either A] =
+    mapErrors((path, msg) => path.show + ": " + msg)
 
   def monadic: Monadic[F, A] =
     Monadic(value)
 
-  private def mapErrors[B](f: (Path, String) => B): F[NonEmptyList[B] \/ A] =
+  private def mapErrors[B](f: (Path, String) => B): F[NonEmptyList[B] Either A] =
     Result.mapErrors(value)(f)
 }
 
@@ -26,45 +29,37 @@ private[xml] object Result {
 
   private[xml] type Errors = NonEmptyList[(Path, String)]
 
-  private def mapErrors[A, B, F[_] : Functor](value: F[Result.Errors \/ A])(f: (Path, String) => B): F[NonEmptyList[B] \/ A] =
+  private def mapErrors[A, B, F[_] : Functor](value: F[Result.Errors Either A])(f: (Path, String) => B): F[NonEmptyList[B] Either A] =
     value.map(_.leftMap(_.map(f.tupled)))
 
   def success[F[_]:Applicative, A](value: A): Result[F, A] =
-    value.point[Result[F, *]]
+    value.pure[Result[F, *]]
 
   def error[F[_]:Applicative, A](path: Path, msg: String): Result[F, A] =
-    Result((path, msg).wrapNel.left[A].point[F])
+    Result((path, msg).pure[NonEmptyList].asLeft.pure[F])
 
-  def fromDisjunction[F[_]:Applicative, A](d: F[String \/ A], name: String): Result[F, A] =
-    Result(d.map(_.leftMap(e => (Path((name, Option.empty[Int]).wrapNel), e).wrapNel)))
+  def fromEither[F[_]:Applicative, A](d: F[String Either A], name: String): Result[F, A] =
+    Result(d.map(_.leftMap(e => (Path((name, Option.empty[Int]).pure[NonEmptyList]), e).pure[NonEmptyList])))
 
   implicit def applicativeInstance[F[_]:Applicative]: Applicative[Result[F, *]] =
     new Applicative[Result[F, *]] {
-      private lazy val C = Applicative[F]
-        .compose[Result.Errors \/ *]
-
-      override def ap[A, B](fa: => Result[F, A])(f: => Result[F, A => B]): Result[F, B] = {
-        lazy val C2 = Applicative[F]
-          .compose[scalaz.Validation[Result.Errors, *]]
-
+      override def ap[A, B](f: Result[F,A => B])(fa: Result[F,A]): Result[F,B] =
         Result(
-          C2
-            .apply2(
-              f.value.map(_.validation),
-              fa.value.map(_.validation)
-            )(_(_))
-            .map(_.disjunction)
+          Nested
+            .apply(f.value.map(_.toValidated))
+            .ap(Nested(fa.value.map(_.toValidated)))
+            .value
+            .map(_.toEither)
         )
-      }
 
-      override def point[A](a: => A): Result[F, A] =
-        Result(C point a)
+      override def pure[A](x: A): Result[F,A] =
+        Result(x.asRight.pure[F])
     }
 
-  implicit def equalInstance[F[_], A](implicit ev: Equal[F[Errors \/ A]]): Equal[Result[F, A]] =
+  implicit def eqInstance[F[_], A](implicit ev: Eq[F[Errors Either A]]): Eq[Result[F, A]] =
     ev contramap (_.value)
 
-  final case class Monadic[F[_]:Applicative, A](value: F[Errors \/ A]) {
+  final case class Monadic[F[_]:Applicative, A](value: F[Errors Either A]) {
 
     def applicative: Result[F, A] =
       Result(value)
@@ -75,16 +70,22 @@ private[xml] object Result {
 
     implicit def monadInstance[F[_]:Monad]: Monad[Monadic[F, *]] =
       new Monad[Monadic[F, *]] {
+        override def flatMap[A, B](fa: Monadic[F, A])(f: A => Monadic[F, B]): Monadic[F, B] =
+          Monadic(EitherT(fa.value).flatMapF(f(_).value).value)
 
-        override def bind[A, B](fa: Monadic[F, A])(f: A => Monadic[F, B]): Monadic[F, B] =
-          Monadic(EitherT(fa.value).flatMapF(f(_).value).run)
+        override def pure[A](a: A): Monadic[F, A] =
+          a.pure[Result[F, *]].monadic
 
-        override def point[A](a: => A): Monadic[F, A] =
-          a.point[Result[F, *]].monadic
-
+        override def tailRecM[A, B](a: A)(f: A => Monadic[F,Either[A,B]]): Monadic[F,B] =
+          Monadic(
+            EitherT
+              .catsDataMonadErrorForEitherT[F, Errors]
+              .tailRecM(a)(a => EitherT(f(a).value))
+              .value
+          )
       }
 
-    implicit def equalInstance[F[_], A](implicit ev: Equal[F[Errors \/ A]]): Equal[Monadic[F, A]] =
+    implicit def eqInstance[F[_], A](implicit ev: Eq[F[Errors Either A]]): Eq[Monadic[F, A]] =
       ev contramap (_.value)
   }
 

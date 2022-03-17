@@ -1,10 +1,9 @@
 package ch.srf.xml
 
-import scalaz.Monad
-import scalaz.syntax.applicative._
-import shapeless.{::, HList, HNil}
-
+import cats.Monad
+import cats.syntax.all._
 import scala.xml.Elem
+import shapeless.{::, HList, HNil}
 
 private[xml] trait HListEncoder[F[_], C, A] {
 
@@ -36,7 +35,7 @@ private[xml] object HListEncoder {
           val he = toEncoder(hc)
 
           val hEnc = Encoder[F, Elem, Elem] { e =>
-            val encToParent = Encoder[F, Elem, X](x => appendToElem(e, x, he.descriptor.identifier).point[F])
+            val encToParent = Encoder[F, Elem, X](x => appendToElem(e, x, he.descriptor.identifier).pure[F])
             (encToParent ~ he.encoder).encode(ha)
           }
 
@@ -46,5 +45,5 @@ private[xml] object HListEncoder {
     }
 
 
-  
+
 }

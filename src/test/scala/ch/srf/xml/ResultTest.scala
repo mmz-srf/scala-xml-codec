@@ -1,29 +1,25 @@
 package ch.srf.xml
 
+import cats.data.NonEmptyList
+import cats.Id
+import cats.laws.discipline.ApplicativeTests
+import cats.laws.discipline.MonadTests
+import cats.syntax.all._
+import cats.{Applicative, Apply, Monad}
 import ch.srf.xml.Result.Monadic
 import org.scalacheck.Arbitrary
 import org.specs2.mutable.Specification
 import org.specs2.ScalaCheck
-import scalaz.Id.Id
-import scalaz.scalacheck.ScalazProperties
-import scalaz.std.anyVal.intInstance
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
-import scalaz.std.string.stringInstance
-import scalaz.std.tuple._
-import scalaz.syntax.nel._
-import scalaz.syntax.traverse._
-import scalaz.{-\/, Applicative, Apply, Equal, Monad, NonEmptyList, \/, \/-}
 
 object ResultTest extends Specification with ScalaCheck {
 
   private type F[T] = Option[T]
 
-  private def run[A](result: Result[F, A]): F[NonEmptyList[String] \/ A] =
+  private def run[A](result: Result[F, A]): F[NonEmptyList[String] Either A] =
     result.value.map(_.leftMap(_.map(_._2)))
 
   private def error(msg: String): Result[F, String] =
-    Result.error[F, String](Path(("error", Option.empty[Int]).wrapNel), msg)
+    Result.error[F, String](Path(("error", Option.empty[Int]).pure[NonEmptyList]), msg)
 
   "The Applicative instance" should {
 
@@ -33,13 +29,12 @@ object ResultTest extends Specification with ScalaCheck {
         Result.success(_ + " changed")
 
       val err = error("e")
-      val errorResult = Apply[Result[F, *]].ap(err)(f)
-      run(errorResult) should beSome(-\/(NonEmptyList("e")))
+      val errorResult = Apply[Result[F, *]].ap(f)(err)
+      run(errorResult) should beSome(NonEmptyList.of("e").asLeft)
 
       val succ = Result.success[F, String]("a")
-      val successResult = Apply[Result[F, *]].ap(succ)(f)
-      run(successResult) should beSome(\/-("a changed"))
-
+      val successResult = Apply[Result[F, *]].ap(f)(succ)
+      run(successResult) should beSome("a changed".asRight)
     }
 
     "correctly combine errors in apply2" in {
@@ -47,10 +42,9 @@ object ResultTest extends Specification with ScalaCheck {
       val a = error("a")
       val b = error("b")
 
-      val result = Apply[Result[F, *]].apply2(a, b) { _ + _ }
+      val result = (a, b).mapN(_ + _)
 
-      run(result) should beSome(-\/(NonEmptyList("a", "b")))
-
+      run(result) should beSome(NonEmptyList.of("a", "b").asLeft)
     }
 
     "correctly aggregate errors during traveral" in {
@@ -59,18 +53,16 @@ object ResultTest extends Specification with ScalaCheck {
 
       val result = list.traverse(error)
 
-      run(result) should beSome(-\/(NonEmptyList("a", "b", "c")))
+      run(result) should beSome(NonEmptyList.of("a", "b", "c").asLeft)
 
     }
 
     "obey the applicative laws" in {
-
       implicit val applicativeInstance: Applicative[Result[Id, *]] = Result.applicativeInstance[Id]
-      implicit val arb: Arbitrary[Result[Id, Int]] = Gens.resultArb[Id, Int]
-      implicit val functionArb: Arbitrary[Result[Id, Int => Int]] = Gens.resultArb[Id, Int => Int]
-      implicit val eq: Equal[Result[Id, Int]] = Result.equalInstance[Id, Int]
 
-      ScalazProperties.applicative.laws[Result[Id, *]]
+      implicit def arb[A : Arbitrary]: Arbitrary[Result[Id, A]] = Gens.resultArb[Id, A]
+
+      ApplicativeTests[Result[Id, *]].applicative[String, String, String].all
 
     }
 
@@ -83,10 +75,8 @@ object ResultTest extends Specification with ScalaCheck {
       implicit val monadInstance: Monad[Monadic[Id, *]] = Monadic.monadInstance[Id]
       implicit val arb: Arbitrary[Monadic[Id, Int]] = Gens.monadicResultArb[Id, Int]
       implicit val functionArb: Arbitrary[Monadic[Id, Int => Int]] = Gens.monadicResultArb[Id, Int => Int]
-      implicit val eq: Equal[Monadic[Id, Int]] = Monadic.equalInstance[Id, Int]
 
-      ScalazProperties.monad.laws[Monadic[Id, *]]
-
+      MonadTests[Monadic[Id, *]].monad[Int, Int, Int].all
     }
 
   }

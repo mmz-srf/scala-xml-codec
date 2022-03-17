@@ -1,8 +1,8 @@
 package ch.srf.xml
 
+import cats.data.NonEmptyList
+import cats.{Monad, Traverse}
 import ch.srf.xml.util.{CompactHList, Flatten}
-import scalaz.{@@, Monad, NonEmptyList, Traverse, \/}
-
 import scala.xml.Elem
 
 final class XmlCodec[F[_]:Monad, D, X, A](val decoder: XmlDecoder[F, D, X, A],
@@ -22,10 +22,10 @@ final class XmlCodec[F[_]:Monad, D, X, A](val decoder: XmlDecoder[F, D, X, A],
   def skip[B](implicit ev: Flatten[A, B]): XmlCodec[F, D, X, B] =
     new XmlCodec(decoder.skip, encoder.skip)
 
-  def decode(x: X): F[NonEmptyList[String] \/ A] =
+  def decode(x: X): F[NonEmptyList[String] Either A] =
     decoder.decode(x)
 
-  def decodeFromParent(e: Elem)(implicit ev: GetFromElem[D, X]): F[NonEmptyList[String] \/ A] =
+  def decodeFromParent(e: Elem)(implicit ev: GetFromElem[D, X]): F[NonEmptyList[String] Either A] =
     decoder.decodeFromParent(e)
 
   def encode(a: A): F[X] =
@@ -42,13 +42,13 @@ object XmlCodec {
       XmlEncoder.collection[F, C, D, X, A](codec.encoder)
     )
 
-  def text[F[_]:Monad]: XmlCodec[F, Unit, String @@ TextValue, String] =
+  def text[F[_]:Monad]: XmlCodec[F, Unit, TextValue, String] =
     new XmlCodec(XmlDecoder.text, XmlEncoder.text)
 
-  def nonEmptyText[F[_]:Monad]: XmlCodec[F, Unit, String @@ NonEmptyTextValue, String] =
+  def nonEmptyText[F[_]:Monad]: XmlCodec[F, Unit, NonEmptyTextValue, String] =
     new XmlCodec(XmlDecoder.nonEmptyText, XmlEncoder.nonEmptyText)
 
-  def attr[F[_]:Monad](name: String): XmlCodec[F, String, String @@ AttrValue, String] =
+  def attr[F[_]:Monad](name: String): XmlCodec[F, String, AttrValue, String] =
     new XmlCodec(XmlDecoder.attr(name), XmlEncoder.attr(name))
 
   def elem[F[_]:Monad, CS, C, A](name: String, children: CS)

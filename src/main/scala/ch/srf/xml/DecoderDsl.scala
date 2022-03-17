@@ -1,7 +1,8 @@
 package ch.srf.xml
 
+import cats.data.NonEmptyList
+import cats.Monad
 import ch.srf.xml.util.CompactHList
-import scalaz.{@@, Monad, NonEmptyList}
 import shapeless.{::, HList, HNil}
 
 class DecoderDsl[F[_]:Monad] extends EnsureOps {
@@ -15,13 +16,13 @@ class DecoderDsl[F[_]:Monad] extends EnsureOps {
   def oneOrMore[S, D, X, A](decoder: XmlDecoder[F, D, X, A]): XmlDecoder[F, D, NonEmptyList[X], NonEmptyList[A]] =
     XmlDecoder.collection[F, NonEmptyList, D, X, A](decoder, CardinalityDecoder.nel)
 
-  def attr(name: String): XmlDecoder[F, String, String @@ AttrValue, String] =
+  def attr(name: String): XmlDecoder[F, String, AttrValue, String] =
     XmlDecoder.attr(name)
 
-  def text: XmlDecoder[F, Unit, String @@ TextValue, String] =
+  def text: XmlDecoder[F, Unit, TextValue, String] =
     XmlDecoder.text
 
-  def nonEmptyText: XmlDecoder[F, Unit, String @@ NonEmptyTextValue, String] =
+  def nonEmptyText: XmlDecoder[F, Unit, NonEmptyTextValue, String] =
     XmlDecoder.nonEmptyText
 
   private def elem[SC <: HList, C, A](name: String, children: SC)
