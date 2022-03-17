@@ -1,6 +1,6 @@
 package ch.srf.example
 
-import scalaz.Reader
+import cats.data.Reader
 
 object Domain {
 

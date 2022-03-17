@@ -1,9 +1,8 @@
 package ch.srf.xml.util
 
-import scalaz.{Monad, NonEmptyList}
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
-import scalaz.syntax.monad._
+import cats.data.NonEmptyList
+import cats.Monad
+import cats.syntax.all._
 
 private[xml] trait Flatten[A, B] {
   def to(a: A): B
@@ -19,16 +18,16 @@ private[xml] object Flatten {
         a.flatMap(identity)
 
       override def from(b: F[A]): F[F[A]] =
-        b.point[F]
+        b.pure[F]
     }
 
   implicit def option[A]: Flatten[Option[Option[A]], Option[A]] =
-    instance[Option, A](optionInstance)
+    instance[Option, A]
 
   implicit def list[A]: Flatten[List[List[A]], List[A]] =
-    instance[List, A](listInstance)
+    instance[List, A]
 
   implicit def nonEmptyList[A]: Flatten[NonEmptyList[NonEmptyList[A]], NonEmptyList[A]] =
-    instance[NonEmptyList, A](NonEmptyList.nonEmptyList)
+    instance[NonEmptyList, A]
 
 }
