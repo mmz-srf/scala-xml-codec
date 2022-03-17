@@ -117,7 +117,7 @@ This approach allows the compiler to show an error when a decoder/encoder is mis
 
 ## Decoding XML
 
-In this example we use the simple schema which targets the `scalaz.Id.Id` monad:
+In this example we use the simple schema which targets the `cats.Id` monad:
 
     // Get access to the schema builder API
     import Dsl.simple.codec._
@@ -203,22 +203,6 @@ A codec targets an effect monad `F`, which makes it usable only in schemas suppo
 
 #### Implementing a codec for arbitrary effects
 
-Example for a decoder for a `scalaz.Tag` type:
-
-    sealed trait Name
-
-    implicit def nameCodec[F[_]]: Codec[F, String, String @@ Name] =
-      Codec.fromFunctions(
-        decode = Tag.of[Name](_),
-        encode = _.unwrap
-      )
-
-Usage:
-
-    attr("name").as[String @@ Name]
-
-If you need error handling, use `Decoder.fromTryCatchNonFatal` or `Decoder.fromDisjunction` and return a disjunction (`NonEmptyList[String] \/ A`):
-
     implicit def myCodec[F[_]]: Codec[F, String, Foo] =
       Codec.from(
         Decoder.fromDisjunction(x => if (canDecode(x)) \/-(…) else -\/(NonEmptyList("An error occurred"))),
@@ -227,7 +211,7 @@ If you need error handling, use `Decoder.fromTryCatchNonFatal` or `Decoder.fromD
 
 #### Implementing a codec targeting a specific effect
 
-Example for a decoder targeting a `scalaz.Reader`:
+Example for a decoder targeting a `cats.data.Reader`:
 
     type EnvReader[A] = Reader[Env, A]
 
