@@ -80,7 +80,7 @@ private[xml] object Result {
           Monadic(
             EitherT
               .catsDataMonadErrorForEitherT[F, Errors]
-              .tailRecM(a)(a => EitherT[F, Errors, Either[A, B]](f(a).value))
+              .tailRecM(a)(a => EitherT(f(a).value))
               .value
           )
       }
