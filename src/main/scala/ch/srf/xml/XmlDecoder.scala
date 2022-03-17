@@ -2,6 +2,7 @@ package ch.srf.xml
 
 import cats.Contravariant
 import cats.data.NonEmptyList
+import cats.Functor
 import cats.Monad
 import cats.Semigroup
 import cats.syntax.all._
@@ -64,6 +65,14 @@ object XmlDecoder {
       )
     }
   }
+
+  implicit def functorInstance[
+  F[_] : Monad, D, X
+  ]: Functor[XmlDecoder[F, D, X, *]] = new Functor[XmlDecoder[F, D, X, *]] {
+    override def map[A, B](fa: XmlDecoder[F,D,X,A])(f: A => B): XmlDecoder[F,D,X,B] =
+      fa ~ Decoder.fromFunction(f)
+  }
+
   def collection[F[_]:Monad, C[_], D, X, A](d: XmlDecoder[F, D, X, A],
                                             cd: CardinalityDecoder[F, C, X, A]): XmlDecoder[F, D, C[X], C[A]] =
     new XmlDecoder[F, D, C[X], C[A]] {
