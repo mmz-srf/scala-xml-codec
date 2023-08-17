@@ -12,7 +12,7 @@ name := "scala-xml-codec"
 
 val testDependencies = Seq(
   "org.specs2" %% "specs2-scalacheck" % "4.12.3",
-  "io.chrisdavenport" %% "cats-scalacheck" % "0.2.0",
+  "io.chrisdavenport" %% "cats-scalacheck" % "0.3.2",
   "org.typelevel" %% "cats-laws" % "2.6.1",
 ).map(_ % "test")
 
