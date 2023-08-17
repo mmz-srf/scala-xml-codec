@@ -12,4 +12,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.2")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.3.2")
 
-addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.20")
+addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.4.4")
