@@ -1,4 +1,4 @@
-scalaVersion := "2.13.6"
+scalaVersion := "2.13.13"
 
 scalacOptions --= List("-Xlint:inaccessible")
 
